@@ -1,9 +1,11 @@
-= Specific todos =
-  == completion.c ==
+# Specific todos
+
+## completion.c
+
   - what is NNTP, and how to include it? (l75)
   - IMAP completion (l80)
 
-= Auto-Completion API =
+# Auto-Completion API
 
 Encapsulate all the completion code to make it easier to test and maintain.
 Currently, this code is scattered throughout NeoMutt and often uses global
@@ -24,28 +26,34 @@ It replies by:
 - [ ] returning the list of matching symbols
 - [ ] The user can either <kbd>Tab</kbd> through them or select from a menu
 
-= Flatcaps braindump =
+# Flatcaps braindump
 
 *Method*: create, populate, query, destroy
-== query flags ==
+
+## query flags
+
   - ignore case
   - fuzzy
   - magic (dash==underscore)
   - regex (~=fuzzy?)
   - partial
 
-== completion priority ==
+## completion priority
+
   - complete *over* flag
 
-== client settings ==
+## client settings
+
   - option to match first, then cycle
   - match longest
 
-== Requirements: ==
+## Requirements:
+
   - self-contained, except for libmutt
   - tests in test-library repo branch
 
-== coding ==
+## coding
+
   - pass list[] { flags, string }
   - need work buffer (matching length of longest string)
   - need cursor position
@@ -54,9 +62,10 @@ It replies by:
   - flag partial: (anywhere in string); anchor: start, none, end
   - sort variables, etc before auto-completion or properly sort the sources of the strings
 
-=== has a static vars (init.c) ===
-	#define NUMVARS mutt_array_size(MuttVars)
-	#define NUMCOMMANDS mutt_array_size(Commands)
+### has a static vars (init.c)
+
+	`#define NUMVARS mutt_array_size(MuttVars)`
+	`#define NUMCOMMANDS mutt_array_size(Commands)`
 
 	/* Initial string that starts completion. No telling how much the user has
 	* typed so far. Allocate 1024 just to be sure! */
@@ -73,7 +82,7 @@ It replies by:
 	static char **nm_tags;
 	#endif
 
-== multi-field matching?==
+## multi-field matching?
   e.g. Index
   pass [] { flags, str1, str2, etc }
   flags control which are matched?  flags ∀ strings?
