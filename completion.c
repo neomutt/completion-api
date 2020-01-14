@@ -46,33 +46,17 @@ typedef uint8_t MuttCompletionFlags;     /// < Flags for mutt_expando_format(), 
 /* #define MUTT_COMP_PLAIN       (1 << 7) /// < Do not prepend DISP_TO, DISP_CC ... */
 
 struct CompletionItem {
-  char *full_string[10];
+  size_t itemlength;
+  char *full_string;
 };
-
-struct Completion {
-  struct CompletionItem *items[12];
-};
-
-struct Completion *create_completion(bool flags) {
-  struct Completion *comp = calloc(1, sizeof(struct Completion));
-  char x[] = "HelloWorld";
-  struct CompletionItem *it1 = calloc(1, sizeof(struct CompletionItem));
-  *(it1->full_string) = x;
-
-  *(comp->items) = it1;
-  return comp;
-}
 
 /* void add_data(*Completion comp, data) { */
 /* } */
 
-/* void match(*Completion, char *typed_string) { */
+/* void free_completion(struct Completion *completion) { */
+/*   // TODO clean up underlying list as well? */
+/*   free(completion); */
 /* } */
-
-void free_completion(struct Completion *completion) {
-  // TODO clean up underlying list as well?
-  free(completion);
-}
 
 /* char[] *get_completion(struct Completion *comp) { */
 /* } */
@@ -110,6 +94,16 @@ bool match(char *str1, char *str2, MuttCompletionFlags flags) {
   }
 
   return true;
+}
+
+struct CompletionItem *complete(struct CompletionItem *items, size_t items_len, char *typed_string, size_t typed_len, MuttCompletionFlags flags) {
+  for (int i = 0; i < items_len; i++) {
+    if (match(typed_string, items[i].full_string, flags)) {
+      return &items[i];
+    }
+  }
+
+  return NULL;
 }
 
 void test_match(void) {
