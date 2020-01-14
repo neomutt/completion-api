@@ -45,6 +45,8 @@ typedef uint8_t MuttCompletionFlags;     /// < Flags for mutt_expando_format(), 
 /* #define MUTT_COMP_NOFILTER    (1 << 6) /// < Do not allow filtering on this pass */
 /* #define MUTT_COMP_PLAIN       (1 << 7) /// < Do not prepend DISP_TO, DISP_CC ... */
 
+#define STR_EQ(s1,s2) strcmp(s1, s2) == 0
+
 struct CompletionItem {
   size_t itemlength;
   char *full_string;
@@ -144,25 +146,46 @@ void test_capital_diff(void) {
   TEST_CHECK(!capital_diff('a', '!'));
 }
 
-/* int main(int argc, char *argv[]) */
-/* { */
-/*   /1* printf("World! "); *1/ */
-/*   char inp[30]; */
+void test_completion(void) {
+  char *items[] = {"hello", "hiho", "ergo", "!wethersuperlongstring"};
 
-/*   fgets(inp, 30, stdin); */
+  struct CompletionItem *compitems = calloc(4, sizeof(struct CompletionItem));
 
-/*   char hi[] = "Hi"; */
-/*   printf("%s %s", hi, inp); */
+  for (int i = 0; i < 4; i++){
+    compitems[i].full_string = items[i];
+    compitems[i].itemlength = strlen(items[i]);
+  }
 
-/*   struct Completion * c1 = create_completion(true); */
+  char *typed, *result;
 
-/*   printf("%s", *(c1->items[0]->full_string)); */
+  // single matches
+  typed = "hel";
+  result = items[0];
+  TEST_CHECK(STR_EQ(complete(compitems, 4, typed, strlen(typed), MUTT_COMP_IGNORECASE)->full_string, result));
 
-/*   free_completion(c1); */
-/*   return 0; */
-/* } */
+  typed = "hi";
+  result = items[1];
+  TEST_CHECK(STR_EQ(complete(compitems, 4, typed, strlen(typed), MUTT_COMP_IGNORECASE)->full_string, result));
+
+  typed = "HI";
+  result = items[1];
+  TEST_CHECK(STR_EQ(complete(compitems, 4, typed, strlen(typed), MUTT_COMP_IGNORECASE)->full_string, result));
+
+  typed = "!";
+  result = items[3];
+  TEST_CHECK(STR_EQ(complete(compitems, 4, typed, strlen(typed), MUTT_COMP_IGNORECASE)->full_string, result));
+
+  typed = "HI";
+  TEST_CHECK(complete(compitems, 4, typed, strlen(typed), MUTT_COMP_NO_FLAGS) == NULL);
+
+  // several matches...
+  typed = "h";
+  result = items[1];
+  TEST_CHECK(STR_EQ(complete(compitems, 4, typed, strlen(typed), MUTT_COMP_IGNORECASE)->full_string, result));
+}
 
 TEST_LIST = {
-   { "matching test", test_match },
-   {"capital_diff_testing", test_capital_diff},
+   { "match", test_match },
+   {"capital_diff", test_capital_diff},
+   {"completion", test_completion},
    { NULL, NULL } };
