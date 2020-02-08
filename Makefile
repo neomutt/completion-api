@@ -1,2 +1,6 @@
-all:
-	cc -std=c99 -Wall completion.c -o completion
+CFLAGS=-Wall -g -std=c99
+
+all: completion
+
+clean:
+	rm -f completion
