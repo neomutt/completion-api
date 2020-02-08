@@ -19,12 +19,13 @@ typedef uint8_t MuttCompletionFlags;
 struct CompletionItem {
   size_t itemlength;
   char *full_string;
+  size_t list_length;
 };
 
 bool capital_diff(char ch1, char ch2);
 
 bool match(char *str1, char *str2, MuttCompletionFlags flags);
 
-struct CompletionItem *complete(struct CompletionItem *items, size_t items_len, char *typed_string, size_t typed_len, MuttCompletionFlags flags);
+struct CompletionItem *complete(struct CompletionItem *items, char *typed_string, size_t typed_len, MuttCompletionFlags flags);
 
 #endif /* ifndef MUTT_COMPLETION_H */

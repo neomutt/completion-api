@@ -51,6 +51,7 @@ void test_completion(void) {
   }
 
   struct CompletionItem *compitems = calloc(4, sizeof(struct CompletionItem));
+  compitems[0].list_length = 4;
 
   for (int i = 0; i < 4; i++){
     compitems[i].full_string = items[i];
@@ -89,6 +90,14 @@ void test_completion(void) {
   result = items[0];
   printf("\nMatching typed '%s' (first match): '%s'", typed, result);
   TEST_CHECK(STR_EQ(complete(compitems, typed, strlen(typed), MUTT_COMP_IGNORECASE & MUTT_COMP_FIRSTMATCH)->full_string, result));
+
+  typed = "h";
+  char *results[] = { items[0], items[1] };
+  struct CompletionItem *comp_list = complete(compitems, typed, strlen(typed), MUTT_COMP_IGNORECASE);
+  for (int i = 0; i < comp_list[0].list_length; i++) {
+    printf("\n  Matching multi '%s' (ignore case): '%s'", typed, results[i]);
+    TEST_CHECK(STR_EQ(comp_list[i].full_string, results[i]));
+  }
 }
 
 TEST_LIST = {

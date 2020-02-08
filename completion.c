@@ -69,17 +69,20 @@ bool match(char *str1, char *str2, MuttCompletionFlags flags) {
   return true;
 }
 
-struct CompletionItem *complete(struct CompletionItem *items, size_t items_len, char *typed_string, size_t typed_len, MuttCompletionFlags flags) {
-  struct CompletionItem *matchlist = calloc(items_len, sizeof(struct CompletionItem));
+struct CompletionItem *complete(struct CompletionItem *items, char *typed_string, size_t typed_len, MuttCompletionFlags flags) {
+  size_t list_len = items->list_length;
+  struct CompletionItem *matchlist = calloc(list_len, sizeof(struct CompletionItem));
   matchlist[0].full_string = "";
 
   int n = 0;
 
   // iterate through possible completions
-  for (int i = 0; i < items_len; i++) {
+  for (int i = 0; i < list_len; i++) {
     if (match(typed_string, items[i].full_string, flags)) {
       // return first match only
       if (flags & MUTT_COMP_FIRSTMATCH) {
+        free(matchlist);
+        items[i].list_length = 1;
         return &items[i];
       } else {
         matchlist[n] = items[i];
@@ -91,9 +94,10 @@ struct CompletionItem *complete(struct CompletionItem *items, size_t items_len, 
 
   // found no match
   if (matchlist[0].full_string[0] == '\0') {
+    free(matchlist);
     return NULL;
   } else {
+    matchlist[0].list_length = n;
     return &matchlist[0];
   }
-
 }
