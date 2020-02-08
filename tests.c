@@ -45,6 +45,10 @@ void test_capital_diff(void) {
 
 void test_completion(void) {
   char *items[] = {"hello", "hiho", "ergo", "!wethersuperlongstring"};
+  printf("\nItems in our completion list:\n");
+  for (int i = 0; i < 4; ++i) {
+    printf("%s\n", items[i]);
+  }
 
   struct CompletionItem *compitems = calloc(4, sizeof(struct CompletionItem));
 
@@ -58,33 +62,33 @@ void test_completion(void) {
   // single matches
   typed = "hel";
   result = items[0];
-  printf("\nMatching typed '%s' : '%s'", typed, result);
-  TEST_CHECK(STR_EQ(complete(compitems, 4, typed, strlen(typed), MUTT_COMP_IGNORECASE)->full_string, result));
+  printf("\nMatching typed '%s' (ignore case): '%s'", typed, result);
+  TEST_CHECK(STR_EQ(complete(compitems, typed, strlen(typed), MUTT_COMP_IGNORECASE)->full_string, result));
 
   typed = "hi";
   result = items[1];
-  printf("\nMatching typed '%s' : '%s'", typed, result);
-  TEST_CHECK(STR_EQ(complete(compitems, 4, typed, strlen(typed), MUTT_COMP_IGNORECASE)->full_string, result));
+  printf("\nMatching typed '%s' (ignore case): '%s'", typed, result);
+  TEST_CHECK(STR_EQ(complete(compitems, typed, strlen(typed), MUTT_COMP_IGNORECASE)->full_string, result));
 
   typed = "HI";
   result = items[1];
-  printf("\nMatching typed '%s' : '%s'", typed, result);
-  TEST_CHECK(STR_EQ(complete(compitems, 4, typed, strlen(typed), MUTT_COMP_IGNORECASE)->full_string, result));
+  printf("\nMatching typed '%s' (ignore case): '%s'", typed, result);
+  TEST_CHECK(STR_EQ(complete(compitems, typed, strlen(typed), MUTT_COMP_IGNORECASE)->full_string, result));
 
   typed = "!";
   result = items[3];
-  printf("\nMatching typed '%s' : '%s'", typed, result);
-  TEST_CHECK(STR_EQ(complete(compitems, 4, typed, strlen(typed), MUTT_COMP_IGNORECASE)->full_string, result));
+  printf("\nMatching typed '%s' (ignore case): '%s'", typed, result);
+  TEST_CHECK(STR_EQ(complete(compitems, typed, strlen(typed), MUTT_COMP_IGNORECASE)->full_string, result));
 
   typed = "HI";
-  printf("\nMatching typed '%s' : '%s'", typed, result);
-  TEST_CHECK(complete(compitems, 4, typed, strlen(typed), MUTT_COMP_NO_FLAGS) == NULL);
+  printf("\nMatching typed '%s' (no flags): -", typed);
+  TEST_CHECK(complete(compitems, typed, strlen(typed), MUTT_COMP_NO_FLAGS) == NULL);
 
   // several matches -> firstmatch flag
   typed = "h";
   result = items[0];
-  printf("\nMatching typed '%s' : '%s'", typed, result);
-  TEST_CHECK(STR_EQ(complete(compitems, 4, typed, strlen(typed), MUTT_COMP_IGNORECASE & MUTT_COMP_FIRSTMATCH)->full_string, result));
+  printf("\nMatching typed '%s' (first match): '%s'", typed, result);
+  TEST_CHECK(STR_EQ(complete(compitems, typed, strlen(typed), MUTT_COMP_IGNORECASE & MUTT_COMP_FIRSTMATCH)->full_string, result));
 }
 
 TEST_LIST = {
