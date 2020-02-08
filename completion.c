@@ -34,10 +34,10 @@
 #include <stdint.h>
 #include "acutest.h"
 
-typedef uint8_t MuttCompletionFlags;     /// < Flags for mutt_expando_format(), e.g. #MUTT_FORMAT_FORCESUBJ
+typedef uint8_t MuttCompletionFlags;
 #define MUTT_COMP_NO_FLAGS          0  /// < No flags are set
-#define MUTT_COMP_IGNORECASE  (1 << 0) /// < Print the subject even if unchanged
-/* #define MUTT_COMP_TREE        (1 << 1) /// < Draw the thread tree */
+#define MUTT_COMP_IGNORECASE  (1 << 0) /// < Ignore the case of letters
+#define MUTT_COMP_FIRSTMATCH  (1 << 1) /// < Return only the first match
 /* #define MUTT_COMP_OPTIONAL    (1 << 2) /// < Allow optional field processing */
 /* #define MUTT_COMP_STAT_FILE   (1 << 3) /// < Used by attach_format_str */
 /* #define MUTT_COMP_ARROWCURSOR (1 << 4) /// < Reserve space for arrow_cursor */
@@ -51,18 +51,6 @@ struct CompletionItem {
   size_t itemlength;
   char *full_string;
 };
-
-/* void add_data(*Completion comp, data) { */
-/* } */
-
-/* void free_completion(struct Completion *completion) { */
-/*   // TODO clean up underlying list as well? */
-/*   free(completion); */
-/* } */
-
-/* char[] *get_completion(struct Completion *comp) { */
-/* } */
-
 
 bool capital_diff(char ch1, char ch2) {
   // only alphabetic chars can differ in caps
@@ -84,6 +72,7 @@ bool match(char *str1, char *str2, MuttCompletionFlags flags) {
     return false;
   }
 
+  // TODO maybe use int strncasecmp(const char *s1, const char *s2, size_t n) from <strings.h>?
   // character-wise comparison
   for (int i = 0; i < strlen(str1); ++i) {
     if ((flags & MUTT_COMP_IGNORECASE) && capital_diff(str1[i], str2[i])) {
@@ -99,13 +88,32 @@ bool match(char *str1, char *str2, MuttCompletionFlags flags) {
 }
 
 struct CompletionItem *complete(struct CompletionItem *items, size_t items_len, char *typed_string, size_t typed_len, MuttCompletionFlags flags) {
+  struct CompletionItem *matchlist = calloc(items_len, sizeof(struct CompletionItem));
+  matchlist[0].full_string = "";
+
+  int n = 0;
+
+  // iterate through possible completions
   for (int i = 0; i < items_len; i++) {
     if (match(typed_string, items[i].full_string, flags)) {
-      return &items[i];
+      // return first match only
+      if (flags & MUTT_COMP_FIRSTMATCH) {
+        return &items[i];
+      } else {
+        matchlist[n] = items[i];
+        n++;
+        // TODO add match to matchlist
+      }
     }
   }
 
-  return NULL;
+  // found no match
+  if (matchlist[0].full_string[0] == '\0') {
+    return NULL;
+  } else {
+    return &matchlist[0];
+  }
+
 }
 
 void test_match(void) {
