@@ -16,16 +16,12 @@ typedef uint8_t MuttCompletionFlags;
 #ifndef MUTT_COMPLETION_H
 #define MUTT_COMPLETION_H
 
-struct CompletionItem {
-  size_t itemlength;
-  char *full_string;
-  size_t list_length;
-};
-
 bool capital_diff(char ch1, char ch2);
 
 bool match(char *str1, char *str2, MuttCompletionFlags flags);
 
 struct CompletionItem *complete(struct CompletionItem *items, char *typed_string, size_t typed_len, MuttCompletionFlags flags);
+
+struct CompletionItem *cycle_completion(struct CompletionItem *current);
 
 #endif /* ifndef MUTT_COMPLETION_H */

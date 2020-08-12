@@ -21,9 +21,9 @@ The auto-completion code is given:
 - what the user has typed so far
 
 It replies by:
-- [ ] doing nothing (no matches)
-- [ ] completing the symbols (one match found)
-- [ ] returning the list of matching symbols
+- [x] doing nothing (no matches)
+- [x] completing the symbols (one match found)
+- [x] returning the list of matching symbols
 - [ ] The user can either <kbd>Tab</kbd> through them or select from a menu
 
 # Flatcaps braindump

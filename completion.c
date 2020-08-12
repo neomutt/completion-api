@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include <stdint.h>
 #include "completion.h"
+#include "completion_item.h"
 
 bool capital_diff(char ch1, char ch2) {
   // only alphabetic chars can differ in caps
@@ -70,34 +71,44 @@ bool match(char *str1, char *str2, MuttCompletionFlags flags) {
 }
 
 struct CompletionItem *complete(struct CompletionItem *items, char *typed_string, size_t typed_len, MuttCompletionFlags flags) {
-  size_t list_len = items->list_length;
-  struct CompletionItem *matchlist = calloc(list_len, sizeof(struct CompletionItem));
-  matchlist[0].full_string = "";
 
-  int n = 0;
+  // initialise first item of linked list
+  struct CompletionItem *matches = init_list();
+
+  // start completion search from first item
+  struct CompletionItem *current = find_first(items);
 
   // iterate through possible completions
-  for (int i = 0; i < list_len; i++) {
-    if (match(typed_string, items[i].full_string, flags)) {
+  while(current != NULL) {
+    if (match(typed_string, current->full_string, flags)) {
+      matches = add_item(matches, current);
+
       // return first match only
       if (flags & MUTT_COMP_FIRSTMATCH) {
-        free(matchlist);
-        items[i].list_length = 1;
-        return &items[i];
-      } else {
-        matchlist[n] = items[i];
-        n++;
-        // TODO add match to matchlist
+        return matches;
       }
     }
+
+    current = current->next;
   }
 
-  // found no match
-  if (matchlist[0].full_string[0] == '\0') {
-    free(matchlist);
+  // found no match: destroy
+  if (is_empty(matches)) {
+    clear_list(matches, MUTT_COMP_LIST_BOTH);
     return NULL;
-  } else {
-    matchlist[0].list_length = n;
-    return &matchlist[0];
+  }
+
+  return find_first(matches);
+}
+
+struct CompletionItem *cycle_completion(struct CompletionItem *current) {
+  // TODO make this a completion_item function?
+  if (current->next != NULL)
+  {
+    return current->next;
+  }
+  else
+  {
+    return find_first(current);
   }
 }
