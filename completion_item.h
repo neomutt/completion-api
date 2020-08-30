@@ -1,3 +1,6 @@
+#ifndef MUTT_COMPLETION_ITEM_H
+#define MUTT_COMPLETION_ITEM_H
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -15,9 +18,6 @@ struct CompletionItem {
   struct CompletionItem *prev;
 };
 
-#ifndef MUTT_COMPLETION_ITEM_H
-#define MUTT_COMPLETION_ITEM_H
-
 struct CompletionItem *find_first(struct CompletionItem *from);
 struct CompletionItem *init_list();
 struct CompletionItem *copy_item(struct CompletionItem *from);
@@ -26,4 +26,4 @@ struct CompletionItem *add_item(struct CompletionItem *base, struct CompletionIt
 bool is_empty(struct CompletionItem *base);
 void clear_list(struct CompletionItem *from, MuttCompletionWipeFlags flags);
 
-#endif
+#endif /* MUTT_COMPLETION_ITEM_H */

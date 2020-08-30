@@ -1,6 +1,7 @@
-#include <stdio.h>
-#include <bsd/string.h>
+#include "config.h"
 #include "acutest.h"
+#include <bsd/string.h>
+#include <stdio.h>
 #include "completion.h"
 #include "completion_item.h"
 

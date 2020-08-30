@@ -1,5 +1,7 @@
+#include "config.h"
 #include <stdlib.h>
 #include <stdint.h>
+#include <bsd/string.h>
 #include "statemach.h"
 
 struct Completion *comp_new(MuttCompletionFlags flags)

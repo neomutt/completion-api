@@ -1,4 +1,7 @@
+*.gc??
 *.o
-completion
-tests
+lcov/
+lcov.info
+state_tests
 tags
+tests

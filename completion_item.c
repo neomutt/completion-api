@@ -26,6 +26,7 @@
  * Neomutt completion API
  */
 
+#include "config.h"
 #include <bsd/string.h>
 #include "completion_item.h"
 
