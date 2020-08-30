@@ -33,7 +33,6 @@
 #include <ctype.h>
 #include <stdint.h>
 #include "completion.h"
-#include "completion_item.h"
 
 bool capital_diff(char ch1, char ch2) {
   // only alphabetic chars can differ in caps

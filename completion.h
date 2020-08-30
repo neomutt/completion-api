@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "completion_item.h"
 
 typedef uint8_t MuttCompletionFlags;
 #define MUTT_COMP_NO_FLAGS          0  /// < No flags are set
