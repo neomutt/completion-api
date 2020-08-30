@@ -27,8 +27,8 @@
  */
 
 #include "config.h"
-#include <bsd/string.h>
 #include "completion_item.h"
+#include "mutt/lib.h"
 
 void free_completion(struct CompletionItem *items) {
   // TODO
@@ -48,7 +48,7 @@ struct CompletionItem *find_first(struct CompletionItem *from) {
 struct CompletionItem *init_list() {
   struct CompletionItem *list = calloc(1, sizeof(struct CompletionItem));
   list->full_string = calloc(1, 1);
-  strlcpy(list->full_string, "", 1);
+  mutt_str_copy(list->full_string, "", 1);
   list->itemlength = 0;
   list->next = NULL;
   list->prev = NULL;
@@ -58,7 +58,7 @@ struct CompletionItem *init_list() {
 struct CompletionItem *copy_item(struct CompletionItem *from) {
   struct CompletionItem *copy = calloc(1, sizeof(struct CompletionItem));
   copy->full_string = calloc(1, from->itemlength+1);
-  strlcpy(copy->full_string, from->full_string, from->itemlength+1);
+  mutt_str_copy(copy->full_string, from->full_string, from->itemlength+1);
   copy->itemlength = from->itemlength;
   copy->next = NULL;
   copy->prev = NULL;
@@ -68,7 +68,7 @@ struct CompletionItem *copy_item(struct CompletionItem *from) {
 void replace_item(struct CompletionItem *base, struct CompletionItem *with) {
   if (base->full_string) free(base->full_string);
   base->full_string = calloc(1, with->itemlength+1);
-  strlcpy(base->full_string, with->full_string, with->itemlength+1);
+  mutt_str_copy(base->full_string, with->full_string, with->itemlength+1);
   base->itemlength = with->itemlength;
   base->next = NULL;
   base->prev = NULL;

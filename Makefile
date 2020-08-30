@@ -9,7 +9,6 @@ CFLAGS	+= -I$(NEO)/test
 CFLAGS	+= -std=c99
 
 LDFLAGS	+= -L$(NEO)
-LDFLAGS	+= -lbsd
 LDFLAGS	+= -lmutt
 LDFLAGS	+= -lpcre2-8
 

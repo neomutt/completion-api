@@ -1,7 +1,6 @@
 #include "config.h"
 #include <stdlib.h>
 #include <stdint.h>
-#include <bsd/string.h>
 #include "statemach.h"
 
 struct Completion *comp_new(MuttCompletionFlags flags)
@@ -11,13 +10,11 @@ struct Completion *comp_new(MuttCompletionFlags flags)
 
   comp->typed_str = calloc(MAX_TYPED, 1);
   comp->typed_len = 0;
-  /* mutt_str_copy(comp->typed_str, ""); */
-  strlcpy(comp->typed_str, "", 1);
+  mutt_str_copy(comp->typed_str, "", 1);
 
   comp->cur_str = calloc(MAX_TYPED, 1);
   comp->cur_len = 0;
-  /* mutt_str_copy(comp->typed_str, ""); */
-  strlcpy(comp->cur_str, "", 1);
+  mutt_str_copy(comp->cur_str, "", 1);
 
   comp->state = MUTT_COMP_NEW;
   comp->flags = flags;

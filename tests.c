@@ -1,7 +1,7 @@
 #include "config.h"
 #include "acutest.h"
-#include <bsd/string.h>
 #include <stdio.h>
+#include "mutt/lib.h"
 #include "completion.h"
 #include "completion_item.h"
 
@@ -82,10 +82,10 @@ void test_replace_item(void) {
   struct CompletionItem *b = init_list();
 
   a->full_string = calloc(1, 6);
-  strlcpy(a->full_string, "hello", 6);
+  mutt_str_copy(a->full_string, "hello", 6);
   a->itemlength = strlen(a->full_string);
   b->full_string = calloc(1, 8);
-  strlcpy(b->full_string, "replace", 8);
+  mutt_str_copy(b->full_string, "replace", 8);
   b->itemlength = strlen(b->full_string);
 
   TEST_CHECK(STR_DF(a->full_string, b->full_string));
@@ -154,7 +154,7 @@ void test_completion(void) {
   printf("Adding items to completion list...\n");
   for (int i = 0; i < 4; i++){
     newitem->full_string = calloc(1, strlen(items[i])+1);
-    strlcpy(newitem->full_string, items[i], strlen(items[i])+1);
+    mutt_str_copy(newitem->full_string, items[i], strlen(items[i])+1);
     newitem->itemlength = strlen(items[i]);
     add_item(compitems, newitem);
     printf(" - %s\n", newitem->full_string);
