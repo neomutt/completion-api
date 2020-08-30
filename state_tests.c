@@ -1,18 +1,19 @@
 #include "config.h"
 #include "acutest.h"
-#include "statemach.h"
 #include "completion.h"
+#include "statemach.h"
 
-#define STR_EQ(s1,s2) strcmp(s1, s2) == 0
-#define STR_DF(s1,s2) strcmp(s1, s2) != 0
+#define STR_EQ(s1, s2) strcmp(s1, s2) == 0
+#define STR_DF(s1, s2) strcmp(s1, s2) != 0
 
 typedef struct Completion Completion;
 
-void state_init(void) {
-
+void state_init(void)
+{
 }
 
-void state_single(void) {
+void state_single(void)
+{
   Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
 
   comp_add(comp, "apfel", 6);
@@ -34,7 +35,7 @@ void state_single(void) {
 }
 
 TEST_LIST = {
-   {"statemachine initialisation", state_init},
-   {"statemachine single match", state_single},
-   {NULL, NULL}
+  { "statemachine initialisation", state_init },
+  { "statemachine single match", state_single },
+  { NULL, NULL },
 };

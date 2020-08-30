@@ -1,6 +1,6 @@
 #include "config.h"
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "statemach.h"
 
 struct Completion *comp_new(MuttCompletionFlags flags)
@@ -25,7 +25,7 @@ struct Completion *comp_new(MuttCompletionFlags flags)
   return comp;
 }
 
-void comp_add(struct Completion *comp, char* str, size_t str_len)
+void comp_add(struct Completion *comp, char *str, size_t str_len)
 {
   struct CompItem new_item = { 0 };
 
@@ -47,21 +47,24 @@ void comp_type(struct Completion *comp, char *str, size_t str_len)
   comp->state = MUTT_COMP_INIT;
 }
 
-char* comp_complete(struct Completion *comp)
+char *comp_complete(struct Completion *comp)
 {
   struct CompItem *cur_item = NULL;
   int n_matches = 0;
   struct CompItem *first_match = NULL;
 
   // TODO put different states into helper functions instead?
-  switch (comp->state) {
+  switch (comp->state)
+  {
     case MUTT_COMP_INIT:
-      ARRAY_FOREACH(cur_item, comp->items) {
+      ARRAY_FOREACH(cur_item, comp->items)
+      {
         if (match(comp->typed_str, cur_item->str, comp->flags))
         {
           cur_item->is_match = true;
 
-          if (n_matches == 0) first_match = cur_item;
+          if (n_matches == 0)
+            first_match = cur_item;
           n_matches++;
         }
       }
@@ -75,23 +78,26 @@ char* comp_complete(struct Completion *comp)
       {
         // copy first match to current result
         mutt_strn_copy(comp->cur_str, first_match->str, first_match->str_len, MAX_TYPED);
-        if (n_matches > 1) {
+        if (n_matches > 1)
+        {
           comp->state = MUTT_COMP_MULTI;
         }
-        else {
+        else
+        {
           comp->state = MUTT_COMP_MATCH;
         }
       }
-      else {
+      else
+      {
         // TODO this should never happen unless we overflow the int, what shall we do here?
       }
 
       return comp->cur_str;
 
-    case MUTT_COMP_MATCH:   // return to typed string after matching single item
+    case MUTT_COMP_MATCH: // return to typed string after matching single item
       mutt_strn_copy(comp->cur_str, comp->typed_str, comp->typed_len, MAX_TYPED);
       comp->state = MUTT_COMP_INIT;
-    case MUTT_COMP_NEW:     // TODO no items added yet, do nothing?
+    case MUTT_COMP_NEW: // TODO no items added yet, do nothing?
     default:
       return NULL;
   }

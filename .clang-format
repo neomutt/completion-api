@@ -1,0 +1,98 @@
+Language: Cpp
+# BasedOnStyle
+
+TabWidth:          8
+UseTab:            Never
+IndentWidth:       2
+ColumnLimit:       80
+BreakBeforeBraces: Allman
+
+IncludeCategories:
+  # Standard library headers
+  - Regex:      '"config\.h"'
+    Priority:   -130
+  - Regex:      '"acutest\.h"'
+    Priority:   -120
+  - Regex:      '<stddef\.h>'
+    Priority:   -110
+  - Regex:      '<.*>'
+    Priority:   -100
+
+  # Backend private header
+  - Regex:      '"private\.h"'
+    Priority:   -90
+
+  # NeoMutt library headers
+  - Regex:      '"mutt/.*\.h"'
+    Priority:   -80
+  - Regex:      '"address/.*\.h"'
+    Priority:   -70
+  - Regex:      '"config/.*\.h"'
+    Priority:   -60
+  - Regex:      '"email/.*\.h"'
+    Priority:   -50
+  - Regex:      '"core/.*\.h"'
+    Priority:   -40
+  - Regex:      '"alias/.*\.h"'
+    Priority:   -35
+  - Regex:      '"conn/.*\.h"'
+    Priority:   -30
+  - Regex:      '"gui/.*\.h"'
+    Priority:   -20
+
+  # NeoMutt general purpose headers
+  - Regex:      '"mutt\.h"'
+    Priority:   -10
+  - Regex:      '"debug/.*\.h"'
+    Priority:   -5
+
+  # Main Header 0
+
+  # Backend using its own library header
+  - Regex:      '"lib\.h"'
+    Priority:   2
+
+  # All backend library headers
+  - Regex:      '".*/lib\.h"'
+    Priority:   5
+
+  # All other NeoMutt headers
+  - Regex:      '".*"'
+    Priority:   10
+
+AlignAfterOpenBracket:            true
+AlignEscapedNewlinesLeft:         false
+AlignOperands:                    true
+AlignTrailingComments:            true
+AlwaysBreakAfterReturnType:       None
+BinPackArguments:                 true
+BinPackParameters:                true
+BreakBeforeBinaryOperators:       false
+BreakBeforeTernaryOperators:      false
+Cpp11BracedListStyle:             false
+DerivePointerAlignment:           false
+IndentCaseLabels:                 true
+IndentWrappedFunctionNames:       false
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep:              1
+PointerAlignment:                 Right
+ReflowComments:                   false
+SortIncludes:                     true
+SpaceAfterCStyleCast:             true
+SpaceBeforeAssignmentOperators:   true
+SpaceBeforeParens:                ControlStatements
+SpaceInEmptyParentheses:          false
+SpacesInCStyleCastParentheses:    false
+SpacesInParentheses:              false
+SpacesInSquareBrackets:           false
+
+# Allow some slightly over-long lines
+PenaltyExcessCharacter: 1
+
+# NEVER
+AllowShortFunctionsOnASingleLine:    false
+AllowShortBlocksOnASingleLine:       false
+AllowShortCaseLabelsOnASingleLine:   false
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine:        false
+

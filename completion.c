@@ -27,42 +27,50 @@
  */
 
 #include "config.h"
+#include <ctype.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <stdint.h>
 #include "completion.h"
 
-bool capital_diff(char ch1, char ch2) {
+bool capital_diff(char ch1, char ch2)
+{
   // only alphabetic chars can differ in caps
-  if (!(isalpha(ch1) && isalpha(ch2))) {
+  if (!(isalpha(ch1) && isalpha(ch2)))
+  {
     return false;
   }
 
   // both chars capitalized should be the same
-  if (toupper(ch1) == toupper(ch2)) {
+  if (toupper(ch1) == toupper(ch2))
+  {
     return true;
   }
 
   return false;
 }
 
-bool match(char *str1, char *str2, MuttCompletionFlags flags) {
+bool match(char *str1, char *str2, MuttCompletionFlags flags)
+{
   // longer string can not be matched anyway
-  if (strlen(str1) > strlen(str2)) {
+  if (strlen(str1) > strlen(str2))
+  {
     return false;
   }
 
   // TODO maybe use int strncasecmp(const char *s1, const char *s2, size_t n) from <strings.h>?
   // character-wise comparison
-  for (int i = 0; i < strlen(str1); ++i) {
-    if ((flags & MUTT_COMP_IGNORECASE) && capital_diff(str1[i], str2[i])) {
+  for (int i = 0; i < strlen(str1); ++i)
+  {
+    if ((flags & MUTT_COMP_IGNORECASE) && capital_diff(str1[i], str2[i]))
+    {
       continue;
     }
 
-    if (str1[i] != str2[i]) {
+    if (str1[i] != str2[i])
+    {
       return false;
     }
   }
@@ -70,8 +78,9 @@ bool match(char *str1, char *str2, MuttCompletionFlags flags) {
   return true;
 }
 
-struct CompletionItem *complete(struct CompletionItem *items, char *typed_string, size_t typed_len, MuttCompletionFlags flags) {
-
+struct CompletionItem *complete(struct CompletionItem *items, char *typed_string,
+                                size_t typed_len, MuttCompletionFlags flags)
+{
   // initialise first item of linked list
   struct CompletionItem *matches = init_list();
 
@@ -79,12 +88,15 @@ struct CompletionItem *complete(struct CompletionItem *items, char *typed_string
   struct CompletionItem *current = find_first(items);
 
   // iterate through possible completions
-  while(current != NULL) {
-    if (match(typed_string, current->full_string, flags)) {
+  while (current != NULL)
+  {
+    if (match(typed_string, current->full_string, flags))
+    {
       matches = add_item(matches, current);
 
       // return first match only
-      if (flags & MUTT_COMP_FIRSTMATCH) {
+      if (flags & MUTT_COMP_FIRSTMATCH)
+      {
         return matches;
       }
     }
@@ -93,7 +105,8 @@ struct CompletionItem *complete(struct CompletionItem *items, char *typed_string
   }
 
   // found no match: destroy
-  if (is_empty(matches)) {
+  if (is_empty(matches))
+  {
     clear_list(matches, MUTT_COMP_LIST_BOTH);
     return NULL;
   }
@@ -101,7 +114,8 @@ struct CompletionItem *complete(struct CompletionItem *items, char *typed_string
   return find_first(matches);
 }
 
-struct CompletionItem *cycle_completion(struct CompletionItem *current) {
+struct CompletionItem *cycle_completion(struct CompletionItem *current)
+{
   // TODO make this a completion_item function?
   if (current->next != NULL)
   {
