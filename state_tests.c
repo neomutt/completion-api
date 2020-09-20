@@ -25,6 +25,26 @@ void state_empty(void)
   TEST_CHECK(result == NULL);
 }
 
+void state_nomatch(void)
+{
+  printf("\n");
+  Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
+
+  comp_add(comp, "apfel", 6);
+  comp_add(comp, "apple", 6);
+  comp_add(comp, "apply", 6);
+  comp_add(comp, "arange", 7);
+
+  comp_type(comp, "bertha", 7);
+
+  char *result = NULL;
+  printf("Tabbing with no match...\n");
+  result = comp_complete(comp);
+
+  printf("  bertha -> %s\n", result);
+  TEST_CHECK(result == NULL);
+}
+
 void state_single(void)
 {
   printf("\n");
@@ -87,6 +107,7 @@ void state_multi(void)
 TEST_LIST = {
   { "statemachine initialisation", state_init },
   { "statemachine empty list", state_empty},
+  { "statemachine no match", state_nomatch},
   { "statemachine single match", state_single },
   { "statemachine multi match", state_multi },
   { NULL, NULL },
