@@ -61,5 +61,8 @@ lcov: all test force
 	lcov -t "result" -o lcov.info -c -d .
 	genhtml -o lcov lcov.info
 
+format: *.c
+	clang-format -i $?
+
 force:
 
