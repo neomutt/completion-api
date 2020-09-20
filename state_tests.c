@@ -14,6 +14,7 @@ void state_init(void)
 
 void state_single(void)
 {
+  printf("\n");
   Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
 
   comp_add(comp, "apfel", 6);
@@ -26,12 +27,14 @@ void state_single(void)
   char *result = NULL;
   printf("Tabbing single item...\n");
   result = comp_complete(comp);
+  printf("  ar -> %s\n", result);
 
   TEST_CHECK(STR_EQ(result, "arange"));
 
-  // printf("Tabbing again...\n");
-  // result = comp_complete(comp);
-  // TEST_CHECK(STR_EQ(result, "ar"));
+  printf("Tabbing again to reset...\n");
+  result = comp_complete(comp);
+  printf("  ar -> %s\n", result);
+  TEST_CHECK(STR_EQ(result, "ar"));
 }
 
 TEST_LIST = {
