@@ -6,3 +6,4 @@ state_tests
 tags
 tests
 compile_commands.json
+.clangd/
