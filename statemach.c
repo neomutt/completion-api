@@ -96,7 +96,8 @@ char *comp_complete(struct Completion *comp)
       return comp->typed_str;
 
     case MUTT_COMP_MULTI: // use next match
-      ARRAY_FOREACH_FROM(item, comp->items, ARRAY_IDX(comp->items, comp->cur_item))
+      // TODO is ARRAY_FOREACH_FROM overflow safe? It seems to work for now, but maybe check twice!
+      ARRAY_FOREACH_FROM(item, comp->items, ARRAY_IDX(comp->items, comp->cur_item) + 1)
       {
         if (item->is_match)
         {
