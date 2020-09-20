@@ -22,7 +22,7 @@ LDFLAGS	+= -lpcre2-8
 
 OUT	= state_tests tests
 
-SRC_SHARED	= completion.c completion_item.c
+SRC_SHARED	= completion.c
 SRC_STATE	= state_tests.c statemach.c
 SRC_TESTS	= tests.c
 

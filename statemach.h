@@ -32,7 +32,7 @@ struct Completion {
   size_t stem_len;
   MuttCompletionState state;
   MuttCompletionFlags flags;
-  struct CompletionList *items;    // for now, stick with the linked list: TODO switch to Arraylist later
+  struct CompletionList *items;
 };
 
 struct Completion *comp_new(MuttCompletionFlags flags);
