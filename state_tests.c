@@ -12,6 +12,19 @@ void state_init(void)
 {
 }
 
+void state_empty(void)
+{
+  printf("\n");
+  Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
+
+  char *result = NULL;
+  printf("Tabbing with empty list...\n");
+  result = comp_complete(comp);
+
+  printf("  ap -> %s\n", result);
+  TEST_CHECK(result == NULL);
+}
+
 void state_single(void)
 {
   printf("\n");
@@ -73,6 +86,7 @@ void state_multi(void)
 
 TEST_LIST = {
   { "statemachine initialisation", state_init },
+  { "statemachine empty list", state_empty},
   { "statemachine single match", state_single },
   { "statemachine multi match", state_multi },
   { NULL, NULL },
