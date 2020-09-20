@@ -37,8 +37,43 @@ void state_single(void)
   TEST_CHECK(STR_EQ(result, "ar"));
 }
 
+void state_multi(void)
+{
+  printf("\n");
+  Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
+
+  comp_add(comp, "apfel", 6);
+  comp_add(comp, "apple", 6);
+  comp_add(comp, "apply", 6);
+  comp_add(comp, "arange", 7);
+
+  comp_type(comp, "ap", 3);
+
+  char *result = NULL;
+  printf("First tab...\n");
+  result = comp_complete(comp);
+  printf("  ap -> %s\n", result);
+  TEST_CHECK(STR_EQ(result, "apfel"));
+
+  printf("Second tab...\n");
+  result = comp_complete(comp);
+  printf("  ap -> %s\n", result);
+  TEST_CHECK(STR_EQ(result, "apple"));
+
+  printf("Third tab...\n");
+  result = comp_complete(comp);
+  printf("  ap -> %s\n", result);
+  TEST_CHECK(STR_EQ(result, "apply"));
+
+  printf("Third tab to reset...\n");
+  result = comp_complete(comp);
+  printf("  ap -> %s\n", result);
+  TEST_CHECK(STR_EQ(result, "ap"));
+}
+
 TEST_LIST = {
   { "statemachine initialisation", state_init },
   { "statemachine single match", state_single },
+  { "statemachine multi match", state_multi },
   { NULL, NULL },
 };
