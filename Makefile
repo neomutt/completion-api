@@ -64,5 +64,8 @@ lcov: all test force
 format: *.c
 	clang-format -i $?
 
+compile_commands:
+	bear make all
+
 force:
 
