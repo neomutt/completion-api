@@ -13,8 +13,8 @@ LDFLAGS	+= -lmutt
 LDFLAGS	+= -lpcre2-8
 
 # Enable code coverage
-# CFLAGS	+= -fprofile-arcs -ftest-coverage
-# LDFLAGS	+= -fprofile-arcs -ftest-coverage
+CFLAGS	+= -fprofile-arcs -ftest-coverage
+LDFLAGS	+= -fprofile-arcs -ftest-coverage
 
 # Enable Address Sanitizer
 # CFLAGS	+= -fsanitize=address -fsanitize-recover=address
