@@ -27,10 +27,9 @@ ARRAY_HEAD(CompletionList, struct CompItem);
 
 struct Completion {
   char *typed_str;
-  char *cur_str;
+  struct CompItem *cur_item;
   size_t typed_len;
   size_t stem_len;
-  size_t cur_len;
   MuttCompletionState state;
   MuttCompletionFlags flags;
   struct CompletionList *items;    // for now, stick with the linked list: TODO switch to Arraylist later

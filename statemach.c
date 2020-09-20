@@ -12,9 +12,7 @@ struct Completion *comp_new(MuttCompletionFlags flags)
   comp->typed_len = 0;
   mutt_str_copy(comp->typed_str, "", 1);
 
-  comp->cur_str = calloc(MAX_TYPED, 1);
-  comp->cur_len = 0;
-  mutt_str_copy(comp->cur_str, "", 1);
+  comp->cur_item = NULL;
 
   comp->state = MUTT_COMP_NEW;
   comp->flags = flags;
@@ -49,22 +47,21 @@ void comp_type(struct Completion *comp, char *str, size_t str_len)
 
 char *comp_complete(struct Completion *comp)
 {
-  struct CompItem *cur_item = NULL;
+  struct CompItem *item = NULL;
   int n_matches = 0;
-  struct CompItem *first_match = NULL;
 
   // TODO put different states into helper functions instead?
   switch (comp->state)
   {
     case MUTT_COMP_INIT:
-      ARRAY_FOREACH(cur_item, comp->items)
+      ARRAY_FOREACH(item, comp->items)
       {
-        if (match(comp->typed_str, cur_item->str, comp->flags))
+        if (match(comp->typed_str, item->str, comp->flags))
         {
-          cur_item->is_match = true;
+          item->is_match = true;
 
           if (n_matches == 0)
-            first_match = cur_item;
+            comp->cur_item = item;
           n_matches++;
         }
       }
@@ -72,12 +69,11 @@ char *comp_complete(struct Completion *comp)
       if (n_matches == 0)
       {
         comp->state = MUTT_COMP_NOMATCH;
-        mutt_strn_copy(comp->cur_str, "", 0, MAX_TYPED);
+        comp->cur_item = NULL;
+        return NULL;
       }
       else if (n_matches >= 1)
       {
-        // copy first match to current result
-        mutt_strn_copy(comp->cur_str, first_match->str, first_match->str_len, MAX_TYPED);
         if (n_matches > 1)
         {
           comp->state = MUTT_COMP_MULTI;
@@ -92,11 +88,27 @@ char *comp_complete(struct Completion *comp)
         // TODO this should never happen unless we overflow the int, what shall we do here?
       }
 
-      return comp->cur_str;
+      return comp->cur_item->str;
 
     case MUTT_COMP_MATCH: // return to typed string after matching single item
-      mutt_strn_copy(comp->cur_str, comp->typed_str, comp->typed_len, MAX_TYPED);
       comp->state = MUTT_COMP_INIT;
+      comp->cur_item = NULL;
+      return comp->typed_str;
+
+    case MUTT_COMP_MULTI: // use next match
+      ARRAY_FOREACH_FROM(item, comp->items, ARRAY_IDX(comp->items, comp->cur_item))
+      {
+        if (item->is_match)
+        {
+          comp->cur_item = item;
+          return comp->cur_item->str;
+        }
+      }
+
+      // when we reach the end, step back to the typed string
+      comp->state = MUTT_COMP_INIT;
+      comp->cur_item = NULL;
+      return comp->typed_str;
     case MUTT_COMP_NEW: // TODO no items added yet, do nothing?
     default:
       return NULL;
