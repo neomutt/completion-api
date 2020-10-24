@@ -36,10 +36,13 @@ void test_match(void)
 
 void test_capital_diff(void)
 {
+  // we need to set the locale settings, otherwise UTF8 chars won't work as expected
+  setlocale(LC_ALL, "en_US.UTF-8");
+
   TEST_CHECK(capital_diff('a', 'A'));
   TEST_CHECK(capital_diff('w', 'w'));
-  // TODO unicode support
-  /* TEST_CHECK(capital_diff('ä', 'Ä')); */
+
+  TEST_CHECK(capital_diff(L'ä', L'Ä'));
   TEST_CHECK(capital_diff('z', 'Z'));
 
   TEST_CHECK(!capital_diff('c', 'Z'));

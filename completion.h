@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <locale.h>
+#include <wctype.h>
 
 typedef uint8_t MuttCompletionFlags;
 #define MUTT_COMP_NO_FLAGS          0  /// < No flags are set
@@ -16,7 +18,7 @@ typedef uint8_t MuttCompletionFlags;
 #ifndef MUTT_COMPLETION_H
 #define MUTT_COMPLETION_H
 
-bool capital_diff(char ch1, char ch2);
+bool capital_diff(wchar_t ch1, wchar_t ch2);
 
 bool match(char *str1, char *str2, MuttCompletionFlags flags);
 

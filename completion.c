@@ -35,16 +35,16 @@
 #include <string.h>
 #include "completion.h"
 
-bool capital_diff(char ch1, char ch2)
+bool capital_diff(wchar_t ch1, wchar_t ch2)
 {
   // only alphabetic chars can differ in caps
-  if (!(isalpha(ch1) && isalpha(ch2)))
+  if (!(iswalpha(ch1) && iswalpha(ch2)))
   {
     return false;
   }
 
   // both chars capitalized should be the same
-  if (toupper(ch1) == toupper(ch2))
+  if (towupper(ch1) == towupper(ch2))
   {
     return true;
   }
