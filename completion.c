@@ -52,17 +52,17 @@ bool capital_diff(wchar_t ch1, wchar_t ch2)
   return false;
 }
 
-bool match(char *str1, char *str2, MuttCompletionFlags flags)
+bool match(const wchar_t *str1, const wchar_t *str2, MuttCompletionFlags flags)
 {
   // longer string can not be matched anyway
-  if (strlen(str1) > strlen(str2))
+  if (wcslen(str1) > wcslen(str2))
   {
     return false;
   }
 
   // TODO maybe use int strncasecmp(const char *s1, const char *s2, size_t n) from <strings.h>?
   // character-wise comparison
-  for (int i = 0; i < strlen(str1); ++i)
+  for (int i = 0; i < wcslen(str1); ++i)
   {
     if ((flags & MUTT_COMP_IGNORECASE) && capital_diff(str1[i], str2[i]))
     {

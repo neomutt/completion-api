@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "mutt/array.h"
 #include "mutt/string2.h"
+#include "mutt/mbyte.h"
 #include "completion.h"
 
 #ifndef MAX_TYPED
@@ -18,17 +19,17 @@ typedef uint8_t MuttCompletionState;
 #define MUTT_COMP_NOMATCH   (1 << 3)  /// < No Match found
 
 struct CompItem {
-  char *str;
-  size_t str_len;
+  wchar_t *str;
+  size_t mb_buf_len;
   bool is_match;
 };
 
 ARRAY_HEAD(CompletionList, struct CompItem);
 
 struct Completion {
-  char *typed_str;
+  wchar_t *typed_str;
+  size_t typed_mb_len;
   struct CompItem *cur_item;
-  size_t typed_len;
   size_t stem_len;
   MuttCompletionState state;
   MuttCompletionFlags flags;
@@ -36,8 +37,8 @@ struct Completion {
 };
 
 struct Completion *comp_new(MuttCompletionFlags flags);
-void comp_add(struct Completion *comp, char *str, size_t str_len);
-void comp_type(struct Completion *comp, char *str, size_t str_len);
+void comp_add(struct Completion *comp, const char *str, size_t buf_len);
+void comp_type(struct Completion *comp, const char *str, size_t buf_len);
 char* comp_complete(struct Completion *comp);
 
 /* comp_calc(comp) */

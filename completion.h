@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <locale.h>
 #include <wctype.h>
+#include <wchar.h>
 
 typedef uint8_t MuttCompletionFlags;
 #define MUTT_COMP_NO_FLAGS          0  /// < No flags are set
@@ -20,6 +21,6 @@ typedef uint8_t MuttCompletionFlags;
 
 bool capital_diff(wchar_t ch1, wchar_t ch2);
 
-bool match(char *str1, char *str2, MuttCompletionFlags flags);
+bool match(const wchar_t *str1, const wchar_t *str2, MuttCompletionFlags flags);
 
 #endif /* ifndef MUTT_COMPLETION_H */
