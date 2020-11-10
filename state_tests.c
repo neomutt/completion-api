@@ -44,10 +44,8 @@ void state_empty(void)
   Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
 
   char *result = NULL;
-  printf("Tabbing with empty list...\n");
   result = comp_complete(comp);
 
-  printf("  ap -> %s\n", result);
   TEST_CHECK(result == NULL);
 }
 
@@ -66,10 +64,8 @@ void state_nomatch(void)
   comp_type(comp, "bertha", 7);
 
   char *result = NULL;
-  printf("Tabbing with no match...\n");
   result = comp_complete(comp);
 
-  printf("  bertha -> %s\n", result);
   TEST_CHECK(result == NULL);
 }
 
@@ -80,7 +76,6 @@ void state_single(void)
   printf("\n");
   Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
 
-  comp_add(comp, "apfel", 6);
   comp_add(comp, "apple", 6);
   comp_add(comp, "apply", 6);
   comp_add(comp, "arange", 7);
@@ -89,9 +84,7 @@ void state_single(void)
   comp_type(comp, "ar", 3);
 
   char *result = NULL;
-  printf("Tabbing single item...\n");
   result = comp_complete(comp);
-  printf("  ar -> arange: (%s)\n", result);
 
   TEST_CHECK(STR_EQ(result, "arange"));
 
