@@ -32,11 +32,11 @@ It replies by:
 
 ## query flags
 
-  - ignore case
-  - fuzzy
-  - magic (dash==underscore)
-  - regex (~=fuzzy?)
-  - partial
+  - [X] ignore case
+  - [ ] fuzzy
+  - [ ] magic (dash==underscore)
+  - [ ] regex (~=fuzzy?)
+  - [ ] partial
 
 ## completion priority
 
