@@ -13,6 +13,8 @@ void state_init(void)
 
 void state_empty(void)
 {
+  // we need to set the locale settings, otherwise UTF8 chars won't work as expected
+  setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
   Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
 
@@ -26,6 +28,8 @@ void state_empty(void)
 
 void state_nomatch(void)
 {
+  // we need to set the locale settings, otherwise UTF8 chars won't work as expected
+  setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
   Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
 
@@ -100,6 +104,8 @@ void state_single_utf8(void)
 
 void state_multi(void)
 {
+  // we need to set the locale settings, otherwise UTF8 chars won't work as expected
+  setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
   Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
 
