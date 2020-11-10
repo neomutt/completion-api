@@ -4,10 +4,20 @@
 #include "mutt/array.h"
 #include "mutt/string2.h"
 #include "mutt/mbyte.h"
+#include "mutt/logging.h"
 #include "completion.h"
 
 #ifndef MAX_TYPED
 #define MAX_TYPED 100
+#endif
+
+// TODO replace with mutt_error(...), mutt_warning(...), mutt_message(...), mutt_debug(LEVEL, ...)
+#ifndef LOGGING
+#define logerr(M, ...) printf("ERR: %s%d: " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define logwar(M, ...) printf("WAR: %s%d: " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define loginf(M, ...) printf("INF: %s%d: " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define logdeb(L, M, ...) printf("DBG%d: %s%d: " M "\n",\
+    L, __FILE__, __LINE__, ##__VA_ARGS__)
 #endif
 
 typedef uint8_t MuttCompletionState;
