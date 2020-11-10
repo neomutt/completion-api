@@ -37,9 +37,11 @@ struct Completion {
 };
 
 struct Completion *comp_new(MuttCompletionFlags flags);
-void comp_add(struct Completion *comp, const char *str, size_t buf_len);
-void comp_type(struct Completion *comp, const char *str, size_t buf_len);
+int comp_add(struct Completion *comp, const char *str, size_t buf_len);
+int comp_type(struct Completion *comp, const char *str, size_t buf_len);
 char* comp_complete(struct Completion *comp);
+int comp_health_check(const struct Completion *comp);
+int comp_str_check(const char *str, size_t buf_len);
 
 /* comp_calc(comp) */
 /*     User presses <tab> */

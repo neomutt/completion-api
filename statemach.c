@@ -22,8 +22,13 @@ struct Completion *comp_new(MuttCompletionFlags flags)
   return comp;
 }
 
-void comp_add(struct Completion *comp, const char *str, size_t str_len)
+// TODO use buf_len instead of str_len
+int comp_add(struct Completion *comp, const char *str, size_t buf_len)
 {
+  if (!comp_health_check(comp)) return 0;
+
+  if (!comp_str_check(str, buf_len)) return 0;
+
   struct CompItem new_item = { 0 };
 
   // keep the mb string buffer length for backconversion
@@ -42,11 +47,14 @@ void comp_add(struct Completion *comp, const char *str, size_t str_len)
 
   // TODO what about duplicates? better handle them here, I guess
   ARRAY_ADD(comp->items, new_item);
+  return 1;
 }
 
-void comp_type(struct Completion *comp, const char *str, size_t buf_len)
+int comp_type(struct Completion *comp, const char *str, size_t buf_len)
 {
-  // TODO free existing memory before typing again
+  if (!comp_health_check(comp)) return 0;
+
+  if (!comp_str_check(str, buf_len)) return 0;
 
   // keep the mb string buffer length for backconversion
   comp->typed_mb_len = buf_len;
@@ -60,10 +68,13 @@ void comp_type(struct Completion *comp, const char *str, size_t buf_len)
          wcslen(comp->typed_str));
 
   comp->state = MUTT_COMP_INIT;
+  return 1;
 }
 
 char *comp_complete(struct Completion *comp)
 {
+  if (!comp_health_check(comp)) return NULL;
+
   struct CompItem *item = NULL;
   int n_matches = 0;
 
@@ -156,4 +167,41 @@ char *comp_complete(struct Completion *comp)
   mutt_mb_wcstombs(match, match_len, result, wcslen(result));
   printf("match is '%s' (buf:%lu, strl:%lu)\n", match, match_len, wcslen(result));
   return match;
+}
+
+int comp_health_check(const struct Completion *comp)
+{
+  if (!comp) {
+    logerr("CompHealth: null pointer struct.");
+    return 0;
+  }
+  if (!comp->typed_str)
+  {
+    logerr("CompHealth: null pointer typed string.");
+    return 0;
+  }
+
+  if (!comp->items)
+  {
+    logerr("CompHealth: null pointer item list.");
+    return 0;
+  }
+
+  return 1;
+}
+
+int comp_str_check(const char *str, size_t buf_len)
+{
+  if (!str)
+  {
+    logerr("StrHealth: nullpointer string.");
+    return 0;
+  }
+  if (buf_len < 2 || mutt_str_len(str) == 0)
+  {
+    logwar("StrHealth: empty string.");
+    return 0;
+  }
+
+  return 1;
 }
