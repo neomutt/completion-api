@@ -11,6 +11,31 @@ void state_init(void)
 {
 }
 
+void malformed_input(void)
+{
+  printf("\n");
+  setlocale(LC_ALL, "en_US.UTF-8");
+
+  // calling functions with null completions
+  TEST_CHECK(comp_add(NULL, "hi", 3) == 0);
+  TEST_CHECK(comp_type(NULL, "hi", 3) == 0);
+  TEST_CHECK(!comp_complete(NULL));
+
+  Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
+
+  // calling with null pointer string
+  TEST_CHECK(comp_type(comp, NULL, 5) == 0);
+  TEST_CHECK(comp_add(comp, NULL, 5) == 0);
+
+  // calling with empty string
+  TEST_CHECK(comp_type(comp, "", 5) == 0);
+  TEST_CHECK(comp_add(comp, "", 5) == 0);
+
+  // calling with small buffer size
+  TEST_CHECK(comp_type(comp, "abcd", 1) == 0);
+  TEST_CHECK(comp_add(comp, "abcd", 1) == 0);
+}
+
 void state_empty(void)
 {
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
@@ -140,6 +165,7 @@ void state_multi(void)
 
 TEST_LIST = {
   { "statemachine initialisation", state_init },
+  { "statemachine malformed input", malformed_input },
   { "statemachine empty list", state_empty },
   { "statemachine no match", state_nomatch },
   { "statemachine single match", state_single },
