@@ -20,33 +20,33 @@ LDFLAGS	+= -fprofile-arcs -ftest-coverage
 # CFLAGS	+= -fsanitize=address -fsanitize-recover=address
 # LDFLAGS	+= -fsanitize=address -fsanitize-recover=address
 
-OUT	= state_tests tests
+OUT	= test_completion test_statemach
 
 SRC_SHARED	= completion.c
-SRC_STATE	= state_tests.c statemach.c
-SRC_TESTS	= tests.c
+SRC_STATE	= test_statemach.c statemach.c
+SRC_COMP	= test_completion.c
 
 OBJ_SHARED	= $(SRC_SHARED:%.c=%.o)
 OBJ_STATE	= $(SRC_STATE:%.c=%.o) $(OBJ_SHARED)
-OBJ_TESTS	= $(SRC_TESTS:%.c=%.o) $(OBJ_SHARED)
+OBJ_COMP	= $(SRC_COMP:%.c=%.o) $(OBJ_SHARED)
 
 all: $(OUT)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-state_tests: $(OBJ_STATE)
+test_statemach: $(OBJ_STATE)
 	$(CC) -o $@ $(OBJ_STATE) $(LDFLAGS)
 
-tests: $(OBJ_TESTS)
-	$(CC) -o $@ $(OBJ_TESTS) $(LDFLAGS)
+test_completion: $(OBJ_COMP)
+	$(CC) -o $@ $(OBJ_COMP) $(LDFLAGS)
 
-test:	state_tests tests
-	./state_tests
-	./tests
+test:	test_statemach test_completion
+	./test_statemach
+	./test_completion
 
 clean:
-	$(RM) $(OBJ_SHARED) $(OBJ_STATE) $(OBJ_TESTS) $(OUT)
+	$(RM) $(OBJ_SHARED) $(OBJ_STATE) $(OBJ_COMP) $(OUT)
 
 distclean: clean
 	$(RM) tags
@@ -57,7 +57,7 @@ tags:	$(SRC) $(HDR) force
 	ctags -R .
 
 lcov: all test force
-	$(RM) lcov state_tests.gc?? tests.gc??
+	$(RM) lcov test_statemach.gc?? test_completion.gc??
 	lcov -t "result" -o lcov.info -c -d .
 	genhtml -o lcov lcov.info
 

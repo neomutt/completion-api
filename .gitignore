@@ -2,8 +2,10 @@
 *.o
 lcov/
 lcov.info
-state_tests
+test_statemach
 tags
-tests
+test_completion
 compile_commands.json
 .clangd/
+.vimrc
+.nvimrc
