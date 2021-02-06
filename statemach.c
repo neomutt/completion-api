@@ -49,9 +49,14 @@ int comp_add(struct Completion *comp, const char *str, size_t buf_len)
   logdeb(4, "Added: '%ls', (buf_len:%lu, wcslen:%lu)", new_item.str, str_buf_len,
          wcslen(new_item.str));
 
-  // TODO what about duplicates? better handle them here, I guess
-  ARRAY_ADD(comp->items, new_item);
-  logdeb(4, "Added item '%ls' successfully.", new_item.str);
+  // don't add duplicates
+  if (!comp_check_duplicate(comp, new_item.str, str_buf_len)) {
+    ARRAY_ADD(comp->items, new_item);
+    logdeb(4, "Added item '%ls' successfully.", new_item.str);
+  } else {
+    logdeb(4, "Duplicate item '%ls' skipped.", new_item.str);
+  }
+
   return 1;
 }
 
@@ -217,4 +222,44 @@ int comp_str_check(const char *str, size_t buf_len)
   }
 
   return 1;
+}
+
+int comp_wcs_check(const wchar_t *str, size_t buf_len)
+{
+  if (!str)
+  {
+    logerr("StrHealth: nullpointer string.");
+    return 0;
+  }
+  if (buf_len < 2 || wcslen(str) == 0)
+  {
+    logwar("StrHealth: empty string.");
+    return 0;
+  }
+
+  return 1;
+}
+
+int comp_get_size(struct Completion *comp)
+{
+  return ARRAY_SIZE(comp->items);
+}
+
+// TODO add check duplicate with char*
+bool comp_check_duplicate(const struct Completion *comp, const wchar_t *str, size_t buf_len)
+{
+  if (!comp_health_check(comp)) return true;
+
+  if (!comp_wcs_check(str, buf_len)) return true;
+
+  struct CompItem *item;
+  ARRAY_FOREACH(item, comp->items)
+  {
+    if (WSTR_EQ(item->str, str))
+    {
+      return true;
+    }
+  }
+
+  return false;
 }

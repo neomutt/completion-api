@@ -22,11 +22,16 @@
 
 typedef uint8_t MuttCompletionState;
 
+#ifndef MUTT_COMP_NEW
 #define MUTT_COMP_NEW        0        /// < Initial state
 #define MUTT_COMP_INIT      (1 << 0)  /// < Initial state
 #define MUTT_COMP_MULTI     (1 << 1)  /// < Multiple matches with common stem
 #define MUTT_COMP_MATCH     (1 << 2)  /// < Match found
 #define MUTT_COMP_NOMATCH   (1 << 3)  /// < No Match found
+#endif
+
+// TODO how can we best handle this...?
+#define WSTR_EQ(s1, s2) wcscmp(s1, s2) == 0
 
 struct CompItem {
   wchar_t *str;
@@ -52,6 +57,9 @@ int comp_type(struct Completion *comp, const char *str, size_t buf_len);
 char* comp_complete(struct Completion *comp);
 int comp_health_check(const struct Completion *comp);
 int comp_str_check(const char *str, size_t buf_len);
+int comp_wcs_check(const wchar_t *str, size_t buf_len);
+int comp_get_size(struct Completion *comp);
+bool comp_check_duplicate(const struct Completion *comp, const wchar_t *str, size_t buf_len);
 
 /* comp_calc(comp) */
 /*     User presses <tab> */

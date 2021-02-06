@@ -156,6 +156,32 @@ void state_multi(void)
   TEST_CHECK(STR_EQ(result, "ap"));
 }
 
+void duplicate_add(void)
+{
+  printf("\n");
+  Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
+
+  comp_add(comp, "apfel", 6);
+  comp_add(comp, "apple", 6);
+
+  TEST_CHECK(comp_get_size(comp) == 2);
+
+  comp_add(comp, "apple", 6);
+
+  printf("We added a duplicate...\n");
+  TEST_CHECK(comp_get_size(comp) == 2);
+
+  // we need to set the locale settings, otherwise UTF8 chars won't work as expected
+  setlocale(LC_ALL, "en_US.UTF-8");
+  comp_add(comp, "Äpfel", 6);
+
+  TEST_CHECK(comp_get_size(comp) == 3);
+
+  comp_add(comp, "Äpfel", 6);
+  printf("Another duplicate, this time unicode...\n");
+  TEST_CHECK(comp_get_size(comp) == 3);
+}
+
 TEST_LIST = {
   { "statemachine initialisation", state_init },
   { "statemachine malformed input", malformed_input },
@@ -164,5 +190,6 @@ TEST_LIST = {
   { "statemachine single match", state_single },
   { "statemachine single match with utf8 result", state_single_utf8 },
   { "statemachine multi match", state_multi },
+  { "statemachine add duplicate", duplicate_add },
   { NULL, NULL },
 };
