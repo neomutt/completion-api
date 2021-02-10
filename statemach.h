@@ -31,6 +31,7 @@ typedef uint8_t MuttCompletionState;
 #endif
 
 // TODO how can we best handle this...?
+// could use wcscoll as well (locale aware)
 #define WSTR_EQ(s1, s2) wcscmp(s1, s2) == 0
 
 struct CompItem {
@@ -54,6 +55,9 @@ struct Completion {
 struct Completion *comp_new(MuttCompletionFlags flags);
 int comp_add(struct Completion *comp, const char *str, size_t buf_len);
 int comp_type(struct Completion *comp, const char *str, size_t buf_len);
+bool comp_state_init(struct Completion *comp, wchar_t **result, size_t *match_len);
+bool comp_state_match(struct Completion *comp, wchar_t **result, size_t *match_len);
+void comp_state_multi(struct Completion *comp, wchar_t **result, size_t *match_len);
 char* comp_complete(struct Completion *comp);
 int comp_health_check(const struct Completion *comp);
 int comp_str_check(const char *str, size_t buf_len);

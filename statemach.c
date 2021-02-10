@@ -24,7 +24,6 @@ struct Completion *comp_new(MuttCompletionFlags flags)
   return comp;
 }
 
-// TODO use buf_len instead of str_len
 int comp_add(struct Completion *comp, const char *str, size_t buf_len)
 {
   if (!comp_health_check(comp)) return 0;
@@ -34,11 +33,10 @@ int comp_add(struct Completion *comp, const char *str, size_t buf_len)
   struct CompItem new_item = { 0 };
 
   // keep the mb string buffer length for backconversion
-  /* new_item.mb_buf_len = buf_len; */
   new_item.mb_buf_len = mutt_str_len(str);
 
   // use a conservative memory allocation: one wchar for each mbchar
-  size_t str_buf_len = mutt_str_len(str) * sizeof(wchar_t) + 4;
+  size_t str_buf_len = (new_item.mb_buf_len + 1) * sizeof(wchar_t);
   new_item.str = mutt_mem_calloc(mutt_str_len(str) + 1, sizeof(wchar_t));
   logdeb(4, "Mem alloc succeeded: new_item.str, bytes: %lu = %lu chars", (mutt_str_len(str) + 1) * sizeof(wchar_t), mutt_str_len(str));
 
@@ -81,6 +79,91 @@ int comp_type(struct Completion *comp, const char *str, size_t buf_len)
   return 1;
 }
 
+bool comp_state_init(struct Completion *comp, wchar_t **result, size_t *match_len)
+{
+  int n_matches = 0;
+  struct CompItem *item = NULL;
+
+  ARRAY_FOREACH(item, comp->items)
+  {
+    if (match(comp->typed_str, item->str, comp->flags))
+    {
+      logdeb(5, "'%ls' matched: '%ls'", comp->typed_str, item->str);
+      item->is_match = true;
+
+      if (n_matches == 0)
+      {
+        comp->cur_item = item;
+      }
+      n_matches++;
+    }
+  }
+
+  if (n_matches == 0)
+  {
+    comp->state = MUTT_COMP_NOMATCH;
+    comp->cur_item = NULL;
+    logdeb(4, "No match for '%ls'.", comp->typed_str);
+    return false;
+  }
+  else if (n_matches >= 1)
+  {
+    if (n_matches > 1)
+    {
+      comp->state = MUTT_COMP_MULTI;
+    }
+    else
+    {
+      comp->state = MUTT_COMP_MATCH;
+    }
+  }
+  else
+  {
+    // TODO this should never happen unless we overflow the int, what shall we do here?
+    return false;
+  }
+
+  *match_len = comp->cur_item->mb_buf_len;
+  *result = comp->cur_item->str;
+  return true;
+}
+
+bool comp_state_match(struct Completion *comp, wchar_t **result, size_t *match_len)
+{
+  comp->state = MUTT_COMP_INIT;
+  comp->cur_item = NULL;
+
+  *result = comp->typed_str;
+  *match_len = comp->typed_mb_len;
+  return true;
+}
+
+void comp_state_multi(struct Completion *comp, wchar_t **result, size_t *match_len)
+{
+  struct CompItem *item = NULL;
+
+  // TODO is ARRAY_FOREACH_FROM overflow safe? It seems to work for now, but maybe check twice!
+  ARRAY_FOREACH_FROM(item, comp->items, ARRAY_IDX(comp->items, comp->cur_item) + 1)
+  {
+    if (item->is_match)
+    {
+      comp->cur_item = item;
+      *result = comp->cur_item->str;
+      *match_len = comp->cur_item->mb_buf_len;
+      break;
+    }
+  }
+
+  // when we reach the end, step back to the typed string
+  if (*result == NULL)
+  {
+    comp->state = MUTT_COMP_INIT;
+    comp->cur_item = NULL;
+    *result = comp->typed_str;
+    *match_len = comp->typed_mb_len;
+  }
+}
+
 char *comp_complete(struct Completion *comp)
 {
   if (!comp_health_check(comp)) return NULL;
@@ -91,88 +174,22 @@ char *comp_complete(struct Completion *comp)
     return NULL;
   }
 
-  struct CompItem *item = NULL;
-  int n_matches = 0;
-
   wchar_t *result = NULL;
   // TODO refactor match_len and ..._mb_len to be buffer sizes
   size_t match_len = 0;
 
-  // TODO put different states into helper functions instead?
   switch (comp->state)
   {
     case MUTT_COMP_INIT:
-      ARRAY_FOREACH(item, comp->items)
-      {
-        if (match(comp->typed_str, item->str, comp->flags))
-        {
-          logdeb(5, "'%ls' matched: '%ls'", comp->typed_str, item->str);
-          item->is_match = true;
-
-          if (n_matches == 0)
-          {
-            comp->cur_item = item;
-          }
-          n_matches++;
-        }
-      }
-
-      if (n_matches == 0)
-      {
-        comp->state = MUTT_COMP_NOMATCH;
-        comp->cur_item = NULL;
-        logdeb(4, "No match for '%ls'.", comp->typed_str);
-        return NULL;
-      }
-      else if (n_matches >= 1)
-      {
-        if (n_matches > 1)
-        {
-          comp->state = MUTT_COMP_MULTI;
-        }
-        else
-        {
-          comp->state = MUTT_COMP_MATCH;
-        }
-      }
-      else
-      {
-        // TODO this should never happen unless we overflow the int, what shall we do here?
-      }
-
-      match_len = comp->cur_item->mb_buf_len;
-      result = comp->cur_item->str;
+      if (!comp_state_init(comp, &result, &match_len)) return NULL;
       break;
 
     case MUTT_COMP_MATCH: // return to typed string after matching single item
-      comp->state = MUTT_COMP_INIT;
-      comp->cur_item = NULL;
-
-      result = comp->typed_str;
-      match_len = comp->typed_mb_len;
+      if (!comp_state_match(comp, &result, &match_len)) return NULL;
       break;
 
     case MUTT_COMP_MULTI: // use next match
-      // TODO is ARRAY_FOREACH_FROM overflow safe? It seems to work for now, but maybe check twice!
-      ARRAY_FOREACH_FROM(item, comp->items, ARRAY_IDX(comp->items, comp->cur_item) + 1)
-      {
-        if (item->is_match)
-        {
-          comp->cur_item = item;
-          result = comp->cur_item->str;
-          match_len = comp->cur_item->mb_buf_len;
-          break;
-        }
-      }
-
-      // when we reach the end, step back to the typed string
-      if (result == NULL)
-      {
-        comp->state = MUTT_COMP_INIT;
-        comp->cur_item = NULL;
-        result = comp->typed_str;
-        match_len = comp->typed_mb_len;
-      }
+      comp_state_multi(comp, &result, &match_len);
       break;
     case MUTT_COMP_NEW: // TODO no items added yet, do nothing?
     default:
@@ -180,7 +197,6 @@ char *comp_complete(struct Completion *comp)
   }
 
   // convert result back to multibyte
-  /* size_t match_len = wcslen(result) * 4 * sizeof(char); */
   char *match = mutt_mem_calloc(match_len + 1, sizeof(char));
   mutt_mb_wcstombs(match, match_len + 1, result, wcslen(result));
   logdeb(4, "Match is '%s' (buf:%lu, strl:%lu)\n", match, match_len + 1, mutt_str_len(match));
@@ -245,7 +261,6 @@ int comp_get_size(struct Completion *comp)
   return ARRAY_SIZE(comp->items);
 }
 
-// TODO add check duplicate with char*
 bool comp_check_duplicate(const struct Completion *comp, const wchar_t *str, size_t buf_len)
 {
   if (!comp_health_check(comp)) return true;
