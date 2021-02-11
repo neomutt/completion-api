@@ -24,10 +24,12 @@ OUT	= test_completion test_statemach
 
 SRC_SHARED	= completion.c
 SRC_STATE	= test_statemach.c statemach.c
+SRC_FUZZY 	= test_fuzzy.c fuzzy.c
 SRC_COMP	= test_completion.c
 
 OBJ_SHARED	= $(SRC_SHARED:%.c=%.o)
 OBJ_STATE	= $(SRC_STATE:%.c=%.o) $(OBJ_SHARED)
+OBJ_FUZZY	= $(SRC_FUZZY:%.c=%.o)
 OBJ_COMP	= $(SRC_COMP:%.c=%.o) $(OBJ_SHARED)
 
 all: $(OUT)
@@ -40,6 +42,9 @@ test_statemach: $(OBJ_STATE)
 
 test_completion: $(OBJ_COMP)
 	$(CC) -o $@ $(OBJ_COMP) $(LDFLAGS)
+
+test_fuzzy: $(OBJ_FUZZY)
+	$(CC) -o $@ $(OBJ_FUZZY) $(LDFLAGS)
 
 test:	test_statemach test_completion
 	./test_statemach

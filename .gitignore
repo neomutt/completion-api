@@ -5,6 +5,7 @@ lcov.info
 test_statemach
 tags
 test_completion
+test_fuzzy
 compile_commands.json
 .clangd/
 .vimrc
