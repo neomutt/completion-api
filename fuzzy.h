@@ -3,6 +3,13 @@
 #include "config.h"
 #include "mutt/string2.h"
 
-int min(int a, int b, int c);
+#define ISLONGMBYTE(mbyte) mblen(mbyte, MB_CUR_MAX) > 1
+#define MBCHARLEN(mbyte) mblen(mbyte, MB_CUR_MAX)
+#define ISBADMBYTE(mbyte) mblen(mbyte, MB_CUR_MAX) == -1
+
+int mbs_char_count(const char *str);
+bool mb_equal(const char *stra, const char *strb);
+int min(const int a, const int b, const int c);
 // TODO add fuzzy match function (could be reused for fuzzy finding in pager etc)
-int lev(char *stra, char *strb);
+int dist_lev(const char *stra, const char *strb);
+int dist_dam_lev(const char *stra, const char *strb);
