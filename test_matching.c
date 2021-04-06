@@ -20,4 +20,5 @@ void test_match_simple()
 
 TEST_LIST = {
   { "simple", test_match_simple },
+  { NULL, NULL },
 };

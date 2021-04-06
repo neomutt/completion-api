@@ -20,7 +20,7 @@ LDFLAGS	+= -fprofile-arcs -ftest-coverage
 # CFLAGS	+= -fsanitize=address -fsanitize-recover=address
 # LDFLAGS	+= -fsanitize=address -fsanitize-recover=address
 
-OUT	= test_completion test_statemach test_matching
+OUT	= test_completion test_statemach test_matching test_regex test_fuzzy
 
 SRC_SHARED	= completion.c
 SRC_STATE	= test_statemach.c statemach.c
@@ -59,14 +59,14 @@ test_fuzzy: $(OBJ_FUZZY)
 test_regex: $(OBJ_REGEX)
 	$(CC) -o $@ $(OBJ_REGEX) $(LDFLAGS)
 
-test:	test_statemach test_completion test_matching
+test:	test_statemach test_completion test_matching test_fuzzy
 	./test_statemach
 	./test_completion
 	./test_matching
 	./test_fuzzy
 
 clean:
-	$(RM) $(OBJ_SHARED) $(OBJ_STATE) $(OBJ_COMP) $(OBJ_MATCH) $(OUT)
+	$(RM) $(OBJ_SHARED) $(OBJ_STATE) $(OBJ_COMP) $(OBJ_MATCH) $(OBJ_FUZZY) $(OBJ_REGEX) $(OUT)
 
 distclean: clean
 	$(RM) tags
