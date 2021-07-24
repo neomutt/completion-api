@@ -1,5 +1,14 @@
 #include "fuzzy.h"
 
+/**
+ * mbs_char_count - count the number of multibyte characters
+ *
+ * this does not count the bytes, but the actual characters of the
+ * string (in human terms)
+ *
+ * @param str multibyte string to count
+ * @retval int number of string characters
+ */
 int mbs_char_count(const char *str)
 {
   int i = 0, len = 0;
@@ -27,6 +36,15 @@ int mbs_char_count(const char *str)
   return len;
 }
 
+/**
+ * mb_equal - test whether two string characters are equal
+ *
+ * this takes the multibyte encoding, bad mbytes and empty strings into account
+ *
+ * @param stra the first string
+ * @param strb the second string
+ * @retval bool true if both characters match, false for errors/no match
+ */
 bool mb_equal(const char *stra, const char *strb)
 {
   if (!stra || !strb)
@@ -66,6 +84,14 @@ bool mb_equal(const char *stra, const char *strb)
   return true;
 }
 
+/**
+ * min - return the minimum value of three integers
+ *
+ * @param a first value
+ * @param b second value
+ * @param c third value
+ * @retval int the minimum value of (a, b, c)
+ */
 int min(const int a, const int b, const int c)
 {
   if (a >= b || a >= c)
@@ -87,6 +113,8 @@ int min(const int a, const int b, const int c)
  *
  * This accounts to the number of insertions/deletions/substitutions to
  * get to string b from string a.
+ *
+ * The levenshtein distance is computed via recursion on the substrings.
  *
  * @param stra string a
  * @param strb string b
@@ -113,12 +141,10 @@ int dist_lev(const char *stra, const char *strb)
 
   if (mb_equal(stra, strb))
   {
-    /* printf("\n mbytes equal, recursing..."); */
     return dist_lev(&stra[MBCHARLEN(stra)], &strb[MBCHARLEN(strb)]);
   }
   else
   {
-    /* printf("\n mbytes unequal, recursing..."); */
     return 1 + min(
         dist_lev(&stra[MBCHARLEN(stra)], strb),
         dist_lev(stra, &strb[MBCHARLEN(strb)]),
@@ -131,6 +157,9 @@ int dist_lev(const char *stra, const char *strb)
  *
  * This accounts to the number of insertions/deletions/substitutions/transpositions to
  * get to string b from string a.
+ *
+ * The damerau-levenshtein distance is computed with dynamic programming
+ * (matrix computation), and thus quicker than the recursive levenshtein distance.
  *
  * @param stra string a
  * @param strb string b
