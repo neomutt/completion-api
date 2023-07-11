@@ -9,7 +9,6 @@
 #include "mutt/mbyte.h"
 #include "mutt_logging.h"
 #include "config.h"
-#include "matching.h"
 
 #ifndef MAX_TYPED
 #define MAX_TYPED 100
@@ -39,6 +38,18 @@ typedef uint8_t MuttCompletionFlags;
 #define MUTT_COMPL_NO_FLAGS          0  /// < No flags are set
 #define MUTT_COMPL_IGNORECASE  (1 << 0) /// < Ignore the case of letters
 #define MUTT_COMPL_FIRSTMATCH  (1 << 1) /// < Return only the first match
+#endif
+
+typedef uint8_t MuttMatchFlags;
+#ifndef MUTT_MATCH_FLAGS
+#define MUTT_MATCH_EXACT           0  /// normal exact string matching
+#define MUTT_MATCH_FUZZY     (1 << 0) /// use fuzzy string matching
+#define MUTT_MATCH_REGEX     (2 << 0) /// use regular expression matching
+#endif
+
+#ifndef MUTT_MATCHING
+#define MUTT_MATCHING
+#define REGERRORSIZE 30
 #endif
 
 // TODO how can we best handle this...?
@@ -86,6 +97,9 @@ int compl_str_check(const char *str, size_t buf_len);
 int compl_wcs_check(const wchar_t *str, size_t buf_len);
 int compl_get_size(struct Completion *comp);
 bool compl_check_duplicate(const struct Completion *comp, const wchar_t *str, size_t buf_len);
+
+// the main matching function
+int match_dist(const char *a, const char *tar, MuttMatchFlags flags);
 
 // these are helper functions to compute the distance between two strings
 static int dist_regex(const char *src, const char *tar, const regex_t regex);

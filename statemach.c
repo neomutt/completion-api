@@ -315,6 +315,36 @@ bool compl_check_duplicate(const struct Completion *comp, const wchar_t *str, si
   return false;
 }
 
+
+/**
+ * match_dist calculates the string distance between source- and target-string,
+ * based on the match method (MuttMatchFlags)
+ *
+ * @param stra source string
+ * @param strb target string
+ * @retval int distance between the strings (or -1 if no match at all)
+ */
+int match_dist(const char *src, const char *tar, MuttMatchFlags flags)
+{
+  int dist = 0;
+
+  switch (flags)
+  {
+    case MUTT_MATCH_FUZZY:
+      dist = dist_dam_lev(src, tar);
+      break;
+    case MUTT_MATCH_REGEX:
+      dist = dist_regex(src, tar);
+      break;
+    case MUTT_MATCH_NORMAL:
+    default:
+      dist = dist_exact(src, tar);
+      break;
+  }
+
+  return dist;
+}
+
 /**
  * dist_regex calculates the string distance between the source- and target-string,
  * by utilising the compiled regular expression
