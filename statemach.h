@@ -5,7 +5,7 @@
 #include "mutt/array.h"
 #include "mutt/string2.h"
 #include "mutt/mbyte.h"
-#include "mutt/logging.h"
+#include "mutt_logging.h"
 #include "config.h"
 #include "completion.h"
 #include "matching.h"

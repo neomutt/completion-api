@@ -44,6 +44,7 @@ bool capital_diff(wchar_t ch1, wchar_t ch2)
   }
 
   // both chars capitalized should be the same
+  // TODO could this lead to locale issues? might need to handle ASCII separately
   if (towupper(ch1) == towupper(ch2))
   {
     return true;
