@@ -17,23 +17,23 @@ void malformed_input(void)
   setlocale(LC_ALL, "en_US.UTF-8");
 
   // calling functions with null completions
-  TEST_CHECK(comp_add(NULL, "hi", 3) == 0);
-  TEST_CHECK(comp_type(NULL, "hi", 3) == 0);
-  TEST_CHECK(!comp_complete(NULL));
+  TEST_CHECK(compl_add(NULL, "hi", 3) == 0);
+  TEST_CHECK(compl_type(NULL, "hi", 3) == 0);
+  TEST_CHECK(!compl_complete(NULL));
 
-  Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
 
   // calling with null pointer string
-  TEST_CHECK(comp_type(comp, NULL, 5) == 0);
-  TEST_CHECK(comp_add(comp, NULL, 5) == 0);
+  TEST_CHECK(compl_type(comp, NULL, 5) == 0);
+  TEST_CHECK(compl_add(comp, NULL, 5) == 0);
 
   // calling with empty string
-  TEST_CHECK(comp_type(comp, "", 5) == 0);
-  TEST_CHECK(comp_add(comp, "", 5) == 0);
+  TEST_CHECK(compl_type(comp, "", 5) == 0);
+  TEST_CHECK(compl_add(comp, "", 5) == 0);
 
   // calling with small buffer size
-  TEST_CHECK(comp_type(comp, "abcd", 1) == 0);
-  TEST_CHECK(comp_add(comp, "abcd", 1) == 0);
+  TEST_CHECK(compl_type(comp, "abcd", 1) == 0);
+  TEST_CHECK(compl_add(comp, "abcd", 1) == 0);
 }
 
 void state_empty(void)
@@ -41,10 +41,10 @@ void state_empty(void)
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
-  Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
 
   char *result = NULL;
-  result = comp_complete(comp);
+  result = compl_complete(comp);
 
   TEST_CHECK(result == NULL);
 }
@@ -54,17 +54,17 @@ void state_nomatch(void)
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
-  Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
 
-  comp_add(comp, "apfel", 6);
-  comp_add(comp, "apple", 6);
-  comp_add(comp, "apply", 6);
-  comp_add(comp, "arange", 7);
+  compl_add(comp, "apfel", 6);
+  compl_add(comp, "apple", 6);
+  compl_add(comp, "apply", 6);
+  compl_add(comp, "arange", 7);
 
-  comp_type(comp, "bertha", 7);
+  compl_type(comp, "bertha", 7);
 
   char *result = NULL;
-  result = comp_complete(comp);
+  result = compl_complete(comp);
 
   TEST_CHECK(result == NULL);
 }
@@ -74,22 +74,22 @@ void state_single(void)
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
-  Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
 
-  comp_add(comp, "apple", 6);
-  comp_add(comp, "apply", 6);
-  comp_add(comp, "arange", 7);
-  comp_add(comp, "Äpfel", 6);
+  compl_add(comp, "apple", 6);
+  compl_add(comp, "apply", 6);
+  compl_add(comp, "arange", 7);
+  compl_add(comp, "Äpfel", 6);
 
-  comp_type(comp, "ar", 3);
+  compl_type(comp, "ar", 3);
 
   char *result = NULL;
-  result = comp_complete(comp);
+  result = compl_complete(comp);
 
   TEST_CHECK(STR_EQ(result, "arange"));
 
   printf("Tabbing again to reset...\n");
-  result = comp_complete(comp);
+  result = compl_complete(comp);
   printf("  ar -> ar: (%s)\n", result);
   TEST_CHECK(STR_EQ(result, "ar"));
 }
@@ -99,23 +99,23 @@ void state_single_utf8(void)
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
-  Completion *comp = comp_new(MUTT_COMP_IGNORECASE);
+  Completion *comp = compl_new(MUTT_COMPL_IGNORECASE);
 
-  comp_add(comp, "apfel", 6);
-  comp_add(comp, "apple", 6);
-  comp_add(comp, "Äpfel", 8); // this has to be bigger, because our umlaut is not just one char
+  compl_add(comp, "apfel", 6);
+  compl_add(comp, "apple", 6);
+  compl_add(comp, "Äpfel", 8); // this has to be bigger, because our umlaut is not just one char
 
-  comp_type(comp, "äp", 6);
+  compl_type(comp, "äp", 6);
 
   char *result = NULL;
   printf("Tabbing single item (ignoring case)...\n");
-  result = comp_complete(comp);
+  result = compl_complete(comp);
   printf("  äp -> Äpfel : (%s)\n", result);
 
   TEST_CHECK(STR_EQ(result, "Äpfel"));
 
   printf("Tabbing again to reset...\n");
-  result = comp_complete(comp);
+  result = compl_complete(comp);
   printf("  äp -> äp: (%s)\n", result);
   TEST_CHECK(STR_EQ(result, "äp"));
 }
@@ -125,33 +125,33 @@ void state_multi(void)
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
-  Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
 
-  comp_add(comp, "apfel", 6);
-  comp_add(comp, "apple", 6);
-  comp_add(comp, "apply", 6);
-  comp_add(comp, "arange", 7);
+  compl_add(comp, "apfel", 6);
+  compl_add(comp, "apple", 6);
+  compl_add(comp, "apply", 6);
+  compl_add(comp, "arange", 7);
 
-  comp_type(comp, "ap", 3);
+  compl_type(comp, "ap", 3);
 
   char *result = NULL;
   printf("First tab...\n");
-  result = comp_complete(comp);
+  result = compl_complete(comp);
   printf("  ap -> %s\n", result);
   TEST_CHECK(STR_EQ(result, "apfel"));
 
   printf("Second tab...\n");
-  result = comp_complete(comp);
+  result = compl_complete(comp);
   printf("  ap -> %s\n", result);
   TEST_CHECK(STR_EQ(result, "apple"));
 
   printf("Third tab...\n");
-  result = comp_complete(comp);
+  result = compl_complete(comp);
   printf("  ap -> %s\n", result);
   TEST_CHECK(STR_EQ(result, "apply"));
 
   printf("Third tab to reset...\n");
-  result = comp_complete(comp);
+  result = compl_complete(comp);
   printf("  ap -> %s\n", result);
   TEST_CHECK(STR_EQ(result, "ap"));
 }
@@ -159,27 +159,27 @@ void state_multi(void)
 void duplicate_add(void)
 {
   printf("\n");
-  Completion *comp = comp_new(MUTT_COMP_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
 
-  comp_add(comp, "apfel", 6);
-  comp_add(comp, "apple", 6);
+  compl_add(comp, "apfel", 6);
+  compl_add(comp, "apple", 6);
 
-  TEST_CHECK(comp_get_size(comp) == 2);
+  TEST_CHECK(compl_get_size(comp) == 2);
 
-  comp_add(comp, "apple", 6);
+  compl_add(comp, "apple", 6);
 
   printf("We added a duplicate...\n");
-  TEST_CHECK(comp_get_size(comp) == 2);
+  TEST_CHECK(compl_get_size(comp) == 2);
 
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
-  comp_add(comp, "Äpfel", 6);
+  compl_add(comp, "Äpfel", 6);
 
-  TEST_CHECK(comp_get_size(comp) == 3);
+  TEST_CHECK(compl_get_size(comp) == 3);
 
-  comp_add(comp, "Äpfel", 6);
+  compl_add(comp, "Äpfel", 6);
   printf("Another duplicate, this time unicode...\n");
-  TEST_CHECK(comp_get_size(comp) == 3);
+  TEST_CHECK(compl_get_size(comp) == 3);
 }
 
 TEST_LIST = {

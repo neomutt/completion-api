@@ -64,7 +64,7 @@ bool match(const wchar_t *str1, const wchar_t *str2, MuttCompletionFlags flags)
   // character-wise comparison
   for (int i = 0; i < wcslen(str1); ++i)
   {
-    if ((flags & MUTT_COMP_IGNORECASE) && capital_diff(str1[i], str2[i]))
+    if ((flags & MUTT_COMPL_IGNORECASE) && capital_diff(str1[i], str2[i]))
     {
       continue;
     }

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "statemach.h"
 
-struct Completion *comp_new(MuttCompletionFlags flags)
+struct Completion *compl_new(MuttCompletionFlags flags)
 {
   struct Completion *comp = mutt_mem_calloc(1, sizeof(struct Completion));
 
@@ -14,7 +14,7 @@ struct Completion *comp_new(MuttCompletionFlags flags)
 
   comp->cur_item = NULL;
 
-  comp->state = MUTT_COMP_NEW;
+  comp->state = MUTT_COMPL_NEW;
   comp->flags = flags;
 
   // TODO call to memset is insecure?
@@ -24,11 +24,11 @@ struct Completion *comp_new(MuttCompletionFlags flags)
   return comp;
 }
 
-int comp_add(struct Completion *comp, const char *str, size_t buf_len)
+int compl_add(struct Completion *comp, const char *str, size_t buf_len)
 {
-  if (!comp_health_check(comp)) return 0;
+  if (!compl_health_check(comp)) return 0;
 
-  if (!comp_str_check(str, buf_len)) return 0;
+  if (!compl_str_check(str, buf_len)) return 0;
 
   struct CompItem new_item = { 0 };
 
@@ -48,7 +48,7 @@ int comp_add(struct Completion *comp, const char *str, size_t buf_len)
          wcslen(new_item.str));
 
   // don't add duplicates
-  if (!comp_check_duplicate(comp, new_item.str, str_buf_len)) {
+  if (!compl_check_duplicate(comp, new_item.str, str_buf_len)) {
     ARRAY_ADD(comp->items, new_item);
     logdeb(4, "Added item '%ls' successfully.", new_item.str);
   } else {
@@ -58,11 +58,11 @@ int comp_add(struct Completion *comp, const char *str, size_t buf_len)
   return 1;
 }
 
-int comp_type(struct Completion *comp, const char *str, size_t buf_len)
+int compl_type(struct Completion *comp, const char *str, size_t buf_len)
 {
-  if (!comp_health_check(comp)) return 0;
+  if (!compl_health_check(comp)) return 0;
 
-  if (!comp_str_check(str, buf_len)) return 0;
+  if (!compl_str_check(str, buf_len)) return 0;
 
   // keep the mb string buffer length for backconversion
   comp->typed_mb_len = buf_len;
@@ -75,11 +75,11 @@ int comp_type(struct Completion *comp, const char *str, size_t buf_len)
   logdeb(4, "Typing: '%ls', (buf_len:%lu, wcslen:%lu)",
       comp->typed_str, str_buf_len, wcslen(comp->typed_str));
 
-  comp->state = MUTT_COMP_INIT;
+  comp->state = MUTT_COMPL_INIT;
   return 1;
 }
 
-bool comp_state_init(struct Completion *comp, wchar_t **result, size_t *match_len)
+bool compl_state_init(struct Completion *comp, wchar_t **result, size_t *match_len)
 {
   int n_matches = 0;
   struct CompItem *item = NULL;
@@ -101,7 +101,7 @@ bool comp_state_init(struct Completion *comp, wchar_t **result, size_t *match_le
 
   if (n_matches == 0)
   {
-    comp->state = MUTT_COMP_NOMATCH;
+    comp->state = MUTT_COMPL_NOMATCH;
     comp->cur_item = NULL;
     logdeb(4, "No match for '%ls'.", comp->typed_str);
     return false;
@@ -110,11 +110,11 @@ bool comp_state_init(struct Completion *comp, wchar_t **result, size_t *match_le
   {
     if (n_matches > 1)
     {
-      comp->state = MUTT_COMP_MULTI;
+      comp->state = MUTT_COMPL_MULTI;
     }
     else
     {
-      comp->state = MUTT_COMP_MATCH;
+      comp->state = MUTT_COMPL_MATCH;
     }
   }
   else
@@ -128,9 +128,9 @@ bool comp_state_init(struct Completion *comp, wchar_t **result, size_t *match_le
   return true;
 }
 
-bool comp_state_match(struct Completion *comp, wchar_t **result, size_t *match_len)
+bool compl_state_match(struct Completion *comp, wchar_t **result, size_t *match_len)
 {
-  comp->state = MUTT_COMP_INIT;
+  comp->state = MUTT_COMPL_INIT;
   comp->cur_item = NULL;
 
   *result = comp->typed_str;
@@ -138,7 +138,7 @@ bool comp_state_match(struct Completion *comp, wchar_t **result, size_t *match_l
   return true;
 }
 
-void comp_state_multi(struct Completion *comp, wchar_t **result, size_t *match_len)
+void compl_state_multi(struct Completion *comp, wchar_t **result, size_t *match_len)
 {
   struct CompItem *item = NULL;
 
@@ -157,16 +157,16 @@ void comp_state_multi(struct Completion *comp, wchar_t **result, size_t *match_l
   // when we reach the end, step back to the typed string
   if (*result == NULL)
   {
-    comp->state = MUTT_COMP_INIT;
+    comp->state = MUTT_COMPL_INIT;
     comp->cur_item = NULL;
     *result = comp->typed_str;
     *match_len = comp->typed_mb_len;
   }
 }
 
-char *comp_complete(struct Completion *comp)
+char *compl_complete(struct Completion *comp)
 {
-  if (!comp_health_check(comp)) return NULL;
+  if (!compl_health_check(comp)) return NULL;
 
   if (ARRAY_EMPTY(comp->items))
   {
@@ -180,18 +180,18 @@ char *comp_complete(struct Completion *comp)
 
   switch (comp->state)
   {
-    case MUTT_COMP_INIT:
-      if (!comp_state_init(comp, &result, &match_len)) return NULL;
+    case MUTT_COMPL_INIT:
+      if (!compl_state_init(comp, &result, &match_len)) return NULL;
       break;
 
-    case MUTT_COMP_MATCH: // return to typed string after matching single item
-      if (!comp_state_match(comp, &result, &match_len)) return NULL;
+    case MUTT_COMPL_MATCH: // return to typed string after matching single item
+      if (!compl_state_match(comp, &result, &match_len)) return NULL;
       break;
 
-    case MUTT_COMP_MULTI: // use next match
-      comp_state_multi(comp, &result, &match_len);
+    case MUTT_COMPL_MULTI: // use next match
+      compl_state_multi(comp, &result, &match_len);
       break;
-    case MUTT_COMP_NEW: // TODO no items added yet, do nothing?
+    case MUTT_COMPL_NEW: // TODO no items added yet, do nothing?
     default:
       return NULL;
   }
@@ -203,7 +203,7 @@ char *comp_complete(struct Completion *comp)
   return match;
 }
 
-int comp_health_check(const struct Completion *comp)
+int compl_health_check(const struct Completion *comp)
 {
   if (!comp) {
     logerr("CompHealth: null pointer struct.");
@@ -224,7 +224,7 @@ int comp_health_check(const struct Completion *comp)
   return 1;
 }
 
-int comp_str_check(const char *str, size_t buf_len)
+int compl_str_check(const char *str, size_t buf_len)
 {
   if (!str)
   {
@@ -240,7 +240,7 @@ int comp_str_check(const char *str, size_t buf_len)
   return 1;
 }
 
-int comp_wcs_check(const wchar_t *str, size_t buf_len)
+int compl_wcs_check(const wchar_t *str, size_t buf_len)
 {
   if (!str)
   {
@@ -256,16 +256,16 @@ int comp_wcs_check(const wchar_t *str, size_t buf_len)
   return 1;
 }
 
-int comp_get_size(struct Completion *comp)
+int compl_get_size(struct Completion *comp)
 {
   return ARRAY_SIZE(comp->items);
 }
 
-bool comp_check_duplicate(const struct Completion *comp, const wchar_t *str, size_t buf_len)
+bool compl_check_duplicate(const struct Completion *comp, const wchar_t *str, size_t buf_len)
 {
-  if (!comp_health_check(comp)) return true;
+  if (!compl_health_check(comp)) return true;
 
-  if (!comp_wcs_check(str, buf_len)) return true;
+  if (!compl_wcs_check(str, buf_len)) return true;
 
   struct CompItem *item;
   ARRAY_FOREACH(item, comp->items)

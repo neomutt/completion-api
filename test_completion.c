@@ -11,7 +11,7 @@ void test_match(void)
 {
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
-  MuttCompletionFlags flags = MUTT_COMP_NO_FLAGS;
+  MuttCompletionFlags flags = MUTT_COMPL_NO_FLAGS;
 
   // basic match and non-match
   TEST_CHECK(match(L"Hello", L"Hello", flags));
@@ -27,13 +27,13 @@ void test_match(void)
   TEST_CHECK(match(L"", L"HELLO", flags));
   TEST_CHECK(match(L"", L"neomuttisawesome", flags));
 
-  flags = MUTT_COMP_IGNORECASE;
+  flags = MUTT_COMPL_IGNORECASE;
   // match case-insensitive
   TEST_CHECK(match(L"hel", L"Helloworld", flags));
   TEST_CHECK(match(L"HEL", L"Helloworld", flags));
   TEST_CHECK(match(L"übel", L"Übel", flags));
 
-  flags = MUTT_COMP_NO_FLAGS;
+  flags = MUTT_COMPL_NO_FLAGS;
   // match case-sensitive ONLY
   TEST_CHECK(!match(L"hel", L"Helloworld", flags));
   TEST_CHECK(!match(L"HEL", L"Helloworld", flags));
