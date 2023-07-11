@@ -1,4 +1,3 @@
-#include <regex.h>
 #include "matching.h"
 
 # define STR_FIND_IDX strchr

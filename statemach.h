@@ -1,11 +1,14 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <regex.h>
 #include "mutt/array.h"
 #include "mutt/string2.h"
 #include "mutt/mbyte.h"
 #include "mutt/logging.h"
+#include "config.h"
 #include "completion.h"
+#include "matching.h"
 
 #ifndef MAX_TYPED
 #define MAX_TYPED 100
@@ -50,6 +53,9 @@ struct Completion {
   MuttCompletionState state;
   MuttCompletionFlags flags;
   struct CompletionList *items;
+  // store the compiled regcomp regex for faster list matching
+  bool regex_compiled;
+  regex_t *regex;
 };
 
 struct Completion *compl_new(MuttCompletionFlags flags);

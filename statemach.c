@@ -1,6 +1,3 @@
-#include "config.h"
-#include <stdint.h>
-#include <stdlib.h>
 #include "statemach.h"
 
 struct Completion *compl_new(MuttCompletionFlags flags)
@@ -17,10 +14,12 @@ struct Completion *compl_new(MuttCompletionFlags flags)
   comp->state = MUTT_COMPL_NEW;
   comp->flags = flags;
 
-  // TODO call to memset is insecure?
   comp->items = mutt_mem_calloc(1, sizeof(struct CompletionList));
   logdeb(4, "Memory allocation for comp->items done.");
   ARRAY_INIT(comp->items);
+
+  comp->regex = NULL;
+  comp->regex_compiled = false;
   return comp;
 }
 
@@ -76,6 +75,9 @@ int compl_type(struct Completion *comp, const char *str, size_t buf_len)
       comp->typed_str, str_buf_len, wcslen(comp->typed_str));
 
   comp->state = MUTT_COMPL_INIT;
+
+  // flag regex compilation out of date after typing
+  comp->regex_compiled = false;
   return 1;
 }
 
@@ -172,6 +174,40 @@ char *compl_complete(struct Completion *comp)
   {
     logdeb(4, "Completion on empty list: '%ls' -> ''", comp->typed_str);
     return NULL;
+  }
+
+  // recompile out-of-date regex
+  if ((comp->flags & MUTT_MATCH_REGEX) && !comp->regex_compiled) {
+    // TODO move error handling to own function?
+    int errcode = regcomp(comp->regex, comp->typed_str, REG_EXTENDED);
+    if (errcode != 0)
+    {
+      // try a error message size of 20 first
+      char *errmsg = calloc(20, sizeof(char));
+      int errsize = regerror(errcode, comp->regex, errmsg, 20);
+
+      // potential reallocation to fit the whole error message
+      if (errsize >= 20)
+      {
+        free(errmsg);
+        char *errmsg = calloc(errsize, sizeof(char));
+        regerror(errcode, comp->regex, errmsg, errsize);
+      }
+
+      logerr("RegexCompilation: Error when compiling string. %s", errmsg);
+
+      free(errmsg);
+      regfree(comp->regex);
+
+      // TODO how do we handle a failed regex compilation
+      // fall back to fuzzy matching instead
+      comp->flags = comp->flags & MUTT_MATCH_FUZZY;
+      comp->regex_compiled = false;
+    }
+    else
+    {
+      comp->regex_compiled = true;
+    }
   }
 
   wchar_t *result = NULL;
