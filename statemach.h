@@ -1,13 +1,14 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <strings.h>
+#include <wchar.h>
 #include <regex.h>
 #include "mutt/array.h"
 #include "mutt/string2.h"
 #include "mutt/mbyte.h"
 #include "mutt_logging.h"
 #include "config.h"
-#include "completion.h"
 #include "matching.h"
 
 #ifndef MAX_TYPED
@@ -31,6 +32,13 @@ typedef uint8_t MuttCompletionState;
 #define MUTT_COMPL_MULTI     (1 << 1)  /// < Multiple matches with common stem
 #define MUTT_COMPL_MATCH     (1 << 2)  /// < Match found
 #define MUTT_COMPL_NOMATCH   (1 << 3)  /// < No Match found
+#endif
+
+typedef uint8_t MuttCompletionFlags;
+#ifndef MUTT_COMPL_NO_FLAGS
+#define MUTT_COMPL_NO_FLAGS          0  /// < No flags are set
+#define MUTT_COMPL_IGNORECASE  (1 << 0) /// < Ignore the case of letters
+#define MUTT_COMPL_FIRSTMATCH  (1 << 1) /// < Return only the first match
 #endif
 
 // TODO how can we best handle this...?
@@ -78,3 +86,9 @@ int compl_str_check(const char *str, size_t buf_len);
 int compl_wcs_check(const wchar_t *str, size_t buf_len);
 int compl_get_size(struct Completion *comp);
 bool compl_check_duplicate(const struct Completion *comp, const wchar_t *str, size_t buf_len);
+
+// these are helper functions to compute the distance between two strings
+static int dist_regex(const char *src, const char *tar, const regex_t regex);
+static int dist_exact(const char *src, const char *tar, const MuttMatchFlags *flags);
+static bool case_comp(const char *src, const char *tar);
+

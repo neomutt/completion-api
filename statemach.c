@@ -314,3 +314,95 @@ bool compl_check_duplicate(const struct Completion *comp, const wchar_t *str, si
 
   return false;
 }
+
+/**
+ * dist_regex calculates the string distance between the source- and target-string,
+ * by utilising the compiled regular expression
+ *
+ * @param src source string
+ * @param tar target string
+ * @param regex compiled regular expression
+ * @retval int distance between the strings (or -1 if no match at all)
+ */
+static int dist_regex(const char *src, const char *tar, const regex_t regex)
+{
+  int dist = -1;
+  regmatch_t pmatch[1];
+
+  // check for a match
+  if (regexec(&regex, tar, 1, pmatch, REG_NOTEOL & REG_NOTBOL) == REG_NOMATCH)
+  {
+    return -1;
+  }
+
+  size_t src_len = mutt_str_len(src);
+  size_t tar_len = mutt_str_len(tar);
+
+  // match distance is the number of additions needed to match the string
+  // TODO this is a naive implementation, what about complex regexes like "[abcdefghijk]+" = "a"
+  if (src_len > tar_len)
+    dist = tar_len - src_len;
+
+  if (src_len <= tar_len)
+    dist = 0;
+
+  return dist;
+}
+
+/**
+ * matches the source against the target string, using exact comparison.
+ * Returns -1 if there is no match, or 0 if the strings match.
+ * If MUTT_COMPL_IGNORECASE is set, it will ignore case.
+ *
+ * @param src source string
+ * @param tar target string
+ * @param flags completion flags
+ */
+static int dist_exact(const char *src, const char *tar, const MuttCompletionFlags *flags)
+{
+  int len_src = MBCHARLEN(src);
+  int len_tar = MBCHARLEN(tar);
+
+  // if only one of them is a multibyte, they can't be the same
+  if (len_src == -1 || len_tar == -1)
+    return -1;
+
+  // string lengths need to match exactly
+  if (len_src != len_tar)
+    return -1;
+
+  // not a multibyte string: use ascii comparison functions
+  if (len_src == -1)
+  {
+    // ignore-case match
+    if ((*flags & MUTT_COMPL_IGNORECASE) && (strcasecmp(src, tar) == 0))
+    {
+      return 0;
+    }
+    // case-sensitive match
+    else if (strcmp(src, tar) == 0)
+    {
+      return 0;
+    }
+
+    // no match
+    return -1;
+  }
+
+  // a multibyte string: convert to widechar and compare
+  wchar_t w_src[len_src + 1];
+  wchar_t w_tar[len_src + 1];
+  mbstowcs(w_src, src, len_src);
+  mbstowcs(w_tar, tar, len_tar);
+
+  // ignore-case match
+  if ((*flags & MUTT_COMPL_IGNORECASE) && (wcscasecmp(w_src, w_tar) == 0))
+    return 0;
+
+  // case-sensitive match
+  if (wcscmp(w_src, w_tar))
+    return 0;
+
+  // no match
+  return -1;
+}
