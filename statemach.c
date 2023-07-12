@@ -5,9 +5,9 @@ struct Completion *compl_new(MuttCompletionFlags flags)
   struct Completion *comp = mutt_mem_calloc(1, sizeof(struct Completion));
 
   // initialise the typed string as empty
-  comp->typed_str = mutt_mem_calloc(MAX_TYPED, sizeof(wchar_t));
-  logdeb(4, "Memory allocation for comp->typed_str done, bytes: %lu.", MAX_TYPED * sizeof(wchar_t));
-  wcsncpy(comp->typed_str, L"", 1);
+  comp->typed_str = mutt_mem_calloc(MAX_TYPED, sizeof(char));
+  logdeb(4, "Memory allocation for comp->typed_str done, bytes: %lu.", MAX_TYPED * sizeof(char));
+  strncpy(comp->typed_str, "", 1);
 
   comp->cur_item = NULL;
 
@@ -31,27 +31,26 @@ int compl_add(struct Completion *comp, const char *str, size_t buf_len)
 
   struct CompItem new_item = { 0 };
 
-  // keep the mb string buffer length for backconversion
-  new_item.mb_buf_len = mutt_str_len(str);
+  // use a conservative memory allocation
+  new_item.str = mutt_mem_calloc(mutt_str_len(str) + 1, sizeof(char));
+  logdeb(4, "Mem alloc succeeded: new_item.str, bytes: %lu = %lu chars", (mutt_str_len(str) + 1) * sizeof(char), mutt_str_len(str));
+  strncpy(new_item.str, str, buf_len);
 
-  // use a conservative memory allocation: one wchar for each mbchar
-  size_t str_buf_len = (new_item.mb_buf_len + 1) * sizeof(wchar_t);
-  new_item.str = mutt_mem_calloc(mutt_str_len(str) + 1, sizeof(wchar_t));
-  logdeb(4, "Mem alloc succeeded: new_item.str, bytes: %lu = %lu chars", (mutt_str_len(str) + 1) * sizeof(wchar_t), mutt_str_len(str));
-
-  // this will not reallocate more memory
-  mutt_mb_mbstowcs(&new_item.str, &str_buf_len, 0, str);
   new_item.is_match = false;
+  new_item.match_dist = -1;
 
-  logdeb(4, "Added: '%ls', (buf_len:%lu, wcslen:%lu)", new_item.str, str_buf_len,
-         wcslen(new_item.str));
+  logdeb(4, "Added: '%s', (buf_len:%lu)", new_item.str, buf_len);
 
   // don't add duplicates
-  if (!compl_check_duplicate(comp, new_item.str, str_buf_len)) {
+  if (!compl_check_duplicate(comp, new_item.str, buf_len))
+  {
     ARRAY_ADD(comp->items, new_item);
-    logdeb(4, "Added item '%ls' successfully.", new_item.str);
-  } else {
-    logdeb(4, "Duplicate item '%ls' skipped.", new_item.str);
+    logdeb(4, "Added item '%s' successfully.", new_item.str);
+  }
+  else
+  {
+    logdeb(4, "Duplicate item '%s' skipped.", new_item.str);
+    return 0;
   }
 
   return 1;
@@ -63,16 +62,10 @@ int compl_type(struct Completion *comp, const char *str, size_t buf_len)
 
   if (!compl_str_check(str, buf_len)) return 0;
 
-  // keep the mb string buffer length for backconversion
-  comp->typed_mb_len = buf_len;
+  // copy typed string into completion
+  strncpy(comp->typed_str, str, buf_len);
 
-  // use a conservative memory allocation: one wchar for each mbchar
-  size_t str_buf_len = mutt_str_len(str) * sizeof(wchar_t);
-  // will reallocate if more memory is needed
-  mutt_mb_mbstowcs(&comp->typed_str, &str_buf_len, 0, str);
-
-  logdeb(4, "Typing: '%ls', (buf_len:%lu, wcslen:%lu)",
-      comp->typed_str, str_buf_len, wcslen(comp->typed_str));
+  logdeb(4, "Typing: '%s', (buf_len:%lu)", comp->typed_str, buf_len);
 
   comp->state = MUTT_COMPL_INIT;
 
@@ -81,43 +74,43 @@ int compl_type(struct Completion *comp, const char *str, size_t buf_len)
   return 1;
 }
 
-bool compl_state_init(struct Completion *comp, wchar_t **result, size_t *match_len)
+bool compl_state_init(struct Completion *comp, char **result, size_t *match_len)
 {
   int n_matches = 0;
+  int dist = -1;
   struct CompItem *item = NULL;
 
   ARRAY_FOREACH(item, comp->items)
   {
-    if (match(comp->typed_str, item->str, comp->flags))
+    item->match_dist = match_dist(comp->typed_str, item->str, comp);
+    if (dist >= 0)
     {
-      logdeb(5, "'%ls' matched: '%ls'", comp->typed_str, item->str);
+      logdeb(5, "'%s' matched: '%s'", comp->typed_str, item->str);
       item->is_match = true;
 
+      // first found item gets assigned to match
       if (n_matches == 0)
-      {
         comp->cur_item = item;
-      }
+
       n_matches++;
     }
   }
+
+  // TODO here we should sort the items by their match distance
 
   if (n_matches == 0)
   {
     comp->state = MUTT_COMPL_NOMATCH;
     comp->cur_item = NULL;
-    logdeb(4, "No match for '%ls'.", comp->typed_str);
+    logdeb(4, "No match for '%s'.", comp->typed_str);
     return false;
   }
   else if (n_matches >= 1)
   {
     if (n_matches > 1)
-    {
       comp->state = MUTT_COMPL_MULTI;
-    }
     else
-    {
       comp->state = MUTT_COMPL_MATCH;
-    }
   }
   else
   {
@@ -125,22 +118,22 @@ bool compl_state_init(struct Completion *comp, wchar_t **result, size_t *match_l
     return false;
   }
 
-  *match_len = comp->cur_item->mb_buf_len;
+  *match_len = mutt_str_len(comp->cur_item->str);
   *result = comp->cur_item->str;
   return true;
 }
 
-bool compl_state_match(struct Completion *comp, wchar_t **result, size_t *match_len)
+bool compl_state_match(struct Completion *comp, char **result, size_t *match_len)
 {
   comp->state = MUTT_COMPL_INIT;
   comp->cur_item = NULL;
 
   *result = comp->typed_str;
-  *match_len = comp->typed_mb_len;
+  *match_len = mutt_str_len(comp->typed_str);
   return true;
 }
 
-void compl_state_multi(struct Completion *comp, wchar_t **result, size_t *match_len)
+void compl_state_multi(struct Completion *comp, char **result, size_t *match_len)
 {
   struct CompItem *item = NULL;
 
@@ -151,7 +144,7 @@ void compl_state_multi(struct Completion *comp, wchar_t **result, size_t *match_
     {
       comp->cur_item = item;
       *result = comp->cur_item->str;
-      *match_len = comp->cur_item->mb_buf_len;
+      *match_len = mutt_str_len(comp->cur_item->str);
       break;
     }
   }
@@ -162,7 +155,7 @@ void compl_state_multi(struct Completion *comp, wchar_t **result, size_t *match_
     comp->state = MUTT_COMPL_INIT;
     comp->cur_item = NULL;
     *result = comp->typed_str;
-    *match_len = comp->typed_mb_len;
+    *match_len = mutt_str_len(comp->typed_str);
   }
 }
 
@@ -172,7 +165,7 @@ char *compl_complete(struct Completion *comp)
 
   if (ARRAY_EMPTY(comp->items))
   {
-    logdeb(4, "Completion on empty list: '%ls' -> ''", comp->typed_str);
+    logdeb(4, "Completion on empty list: '%s' -> ''", comp->typed_str);
     return NULL;
   }
 
@@ -210,7 +203,7 @@ char *compl_complete(struct Completion *comp)
     }
   }
 
-  wchar_t *result = NULL;
+  char *result = NULL;
   // TODO refactor match_len and ..._mb_len to be buffer sizes
   size_t match_len = 0;
 
@@ -234,8 +227,8 @@ char *compl_complete(struct Completion *comp)
 
   // convert result back to multibyte
   char *match = mutt_mem_calloc(match_len + 1, sizeof(char));
-  mutt_mb_wcstombs(match, match_len + 1, result, wcslen(result));
-  logdeb(4, "Match is '%s' (buf:%lu, strl:%lu)\n", match, match_len + 1, mutt_str_len(match));
+  strncpy(match, result, match_len + 1);
+  logdeb(4, "Match is '%s' (buf:%lu)\n", match, mutt_str_len(match));
   return match;
 }
 
@@ -276,14 +269,14 @@ int compl_str_check(const char *str, size_t buf_len)
   return 1;
 }
 
-int compl_wcs_check(const wchar_t *str, size_t buf_len)
+int compl_char_check(const char *str, size_t buf_len)
 {
   if (!str)
   {
     logerr("StrHealth: nullpointer string.");
     return 0;
   }
-  if (buf_len < 2 || wcslen(str) == 0)
+  if (buf_len < 2 || mutt_str_len(str) == 0)
   {
     logwar("StrHealth: empty string.");
     return 0;
@@ -297,52 +290,22 @@ int compl_get_size(struct Completion *comp)
   return ARRAY_SIZE(comp->items);
 }
 
-bool compl_check_duplicate(const struct Completion *comp, const wchar_t *str, size_t buf_len)
+bool compl_check_duplicate(const struct Completion *comp, const char *str, size_t buf_len)
 {
   if (!compl_health_check(comp)) return true;
 
-  if (!compl_wcs_check(str, buf_len)) return true;
+  if (!compl_char_check(str, buf_len)) return true;
 
   struct CompItem *item;
   ARRAY_FOREACH(item, comp->items)
   {
-    if (WSTR_EQ(item->str, str))
+    if (mutt_str_cmp(item->str, str) == 0)
     {
       return true;
     }
   }
 
   return false;
-}
-
-
-/**
- * match_dist calculates the string distance between source- and target-string,
- * based on the match method (MuttMatchFlags)
- *
- * @param stra source string
- * @param strb target string
- * @retval int distance between the strings (or -1 if no match at all)
- */
-int match_dist(const char *src, const char *tar, MuttMatchFlags flags)
-{
-  int dist = 0;
-
-  switch (flags)
-  {
-    case MUTT_MATCH_FUZZY:
-      dist = dist_dam_lev(src, tar);
-      break;
-    case MUTT_MATCH_REGEX:
-      dist = dist_regex(src, tar);
-      break;
-    case MUTT_MATCH_NORMAL:
-    default:
-      dist = dist_exact(src, tar);
-      break;
-  }
-
-  return dist;
 }
 
 /**
@@ -354,13 +317,13 @@ int match_dist(const char *src, const char *tar, MuttMatchFlags flags)
  * @param regex compiled regular expression
  * @retval int distance between the strings (or -1 if no match at all)
  */
-static int dist_regex(const char *src, const char *tar, const regex_t regex)
+static int dist_regex(const char *src, const char *tar, const struct Completion *comp)
 {
   int dist = -1;
   regmatch_t pmatch[1];
 
   // check for a match
-  if (regexec(&regex, tar, 1, pmatch, REG_NOTEOL & REG_NOTBOL) == REG_NOMATCH)
+  if (regexec(comp->regex, tar, 1, pmatch, REG_NOTEOL & REG_NOTBOL) == REG_NOMATCH)
   {
     return -1;
   }
@@ -388,7 +351,7 @@ static int dist_regex(const char *src, const char *tar, const regex_t regex)
  * @param tar target string
  * @param flags completion flags
  */
-static int dist_exact(const char *src, const char *tar, const MuttCompletionFlags *flags)
+static int dist_exact(const char *src, const char *tar, const struct Completion *comp)
 {
   int len_src = MBCHARLEN(src);
   int len_tar = MBCHARLEN(tar);
@@ -405,7 +368,7 @@ static int dist_exact(const char *src, const char *tar, const MuttCompletionFlag
   if (len_src == -1)
   {
     // ignore-case match
-    if ((*flags & MUTT_COMPL_IGNORECASE) && (strcasecmp(src, tar) == 0))
+    if ((comp->flags & MUTT_MATCH_IGNORECASE) && (strcasecmp(src, tar) == 0))
     {
       return 0;
     }
@@ -426,7 +389,7 @@ static int dist_exact(const char *src, const char *tar, const MuttCompletionFlag
   mbstowcs(w_tar, tar, len_tar);
 
   // ignore-case match
-  if ((*flags & MUTT_COMPL_IGNORECASE) && (wcscasecmp(w_src, w_tar) == 0))
+  if ((comp->flags & MUTT_MATCH_IGNORECASE) && (wcscasecmp(w_src, w_tar) == 0))
     return 0;
 
   // case-sensitive match
@@ -435,4 +398,33 @@ static int dist_exact(const char *src, const char *tar, const MuttCompletionFlag
 
   // no match
   return -1;
+}
+
+/**
+ * match_dist calculates the string distance between source- and target-string,
+ * based on the match method (MuttMatchFlags)
+ *
+ * @param stra source string
+ * @param strb target string
+ * @retval int distance between the strings (or -1 if no match at all)
+ */
+int match_dist(const char *src, const char *tar, const struct Completion *comp)
+{
+  int dist = 0;
+
+  switch (comp->flags)
+  {
+    case MUTT_MATCH_FUZZY:
+      dist = dist_dam_lev(src, tar, comp);
+      break;
+    case MUTT_MATCH_REGEX:
+      dist = dist_regex(src, tar, comp);
+      break;
+    case MUTT_MATCH_EXACT:
+    default:
+      dist = dist_exact(src, tar, comp);
+      break;
+  }
+
+  return dist;
 }
