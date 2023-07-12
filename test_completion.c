@@ -40,24 +40,35 @@ void test_match(void)
   TEST_CHECK(match(L"HEL", L"HELloworld", flags));
 }
 
-void test_capital_diff(void)
+void test_exact(void)
 {
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
+  struct Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  comp->flags = MUTT_MATCH_EXACT;
 
-  TEST_CHECK(capital_diff('a', 'A'));
-  TEST_CHECK(capital_diff('w', 'w'));
+  // test some regular ASCII strings
+  TEST_CHECK(match_dist("abc", "Abc", comp) == -1);
+  TEST_CHECK(match_dist("abc", "abc", comp) == 0);
+  comp->flags = MUTT_MATCH_EXACT & MUTT_MATCH_IGNORECASE;
+  TEST_CHECK(match_dist("abc", "Abc", comp) == 0);
+  TEST_CHECK(match_dist("wxy", "wxy", comp) == 0);
 
-  TEST_CHECK(capital_diff(L'ä', L'Ä'));
-  TEST_CHECK(capital_diff('z', 'Z'));
+  // test multibyte comparison
+  comp->flags = MUTT_MATCH_EXACT;
+  TEST_CHECK(match_dist("äpfel", "Äpfel", comp) == -1);
+  comp->flags = MUTT_MATCH_EXACT & MUTT_MATCH_IGNORECASE;
+  TEST_CHECK(match_dist("äpfel", "Äpfel", comp) == 0);
+  TEST_CHECK(match_dist("zabc", "öxrya", comp) == 0);
 
-  TEST_CHECK(!capital_diff('c', 'Z'));
-  TEST_CHECK(!capital_diff(';', 'Z'));
-  TEST_CHECK(!capital_diff('a', '!'));
+  // test some other symbols
+  TEST_CHECK(match_dist("c", "Z", comp) == -1);
+  TEST_CHECK(match_dist(";", "Z", comp) == -1);
+  TEST_CHECK(match_dist("a", "!", comp) == -1);
 }
 
 TEST_LIST = {
   { "match", test_match },
-  { "capital_diff", test_capital_diff },
+  { "exact", test_exact },
   { NULL, NULL },
 };
