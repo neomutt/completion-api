@@ -1,6 +1,30 @@
 #include "fuzzy.h"
 
 /**
+ * min - return the minimum value of three integers
+ *
+ * @param a first value
+ * @param b second value
+ * @param c third value
+ * @retval int the minimum value of (a, b, c)
+ */
+static int min(const int a, const int b, const int c)
+{
+  if (a >= b || a >= c)
+  {
+    return (b < c) ? b : c;
+  }
+  else if (b >= a || b >= c)
+  {
+    return (a < c) ? a : c;
+  }
+  else
+  {
+    return (a < b) ? a : b;
+  }
+}
+
+/**
  * mbs_char_count - count the number of multibyte characters
  *
  * this does not count the bytes, but the actual characters of the
@@ -48,30 +72,23 @@ int mbs_char_count(const char *str)
 bool mb_equal(const char *stra, const char *strb)
 {
   if (!stra || !strb)
-  {
     return false;
-  }
   else if (ISBADMBYTE(stra) || ISBADMBYTE(strb))
-  {
     return false;
-  }
 
   int m = 0;
   // long mbytes need to be considered as a single symbol
   if (ISLONGMBYTE(stra) || ISLONGMBYTE(strb)) {
     // length of mbyte sequences missmatching? different characters
     if (MBCHARLEN(stra) != MBCHARLEN(strb))
-    {
       return false;
-    }
+
     // check each byte of the mbyte sequence matches
     else {
       for (m = 0; m < MBCHARLEN(stra); m++)
       {
         if (stra[m] != strb[m])
-        {
           return false;
-        }
       }
     }
   }
@@ -82,30 +99,6 @@ bool mb_equal(const char *stra, const char *strb)
   }
 
   return true;
-}
-
-/**
- * min - return the minimum value of three integers
- *
- * @param a first value
- * @param b second value
- * @param c third value
- * @retval int the minimum value of (a, b, c)
- */
-int min(const int a, const int b, const int c)
-{
-  if (a >= b || a >= c)
-  {
-    return (b < c) ? b : c;
-  }
-  else if (b >= a || b >= c)
-  {
-    return (a < c) ? a : c;
-  }
-  else
-  {
-    return (a < b) ? a : b;
-  }
 }
 
 /**
@@ -165,7 +158,7 @@ int dist_lev(const char *stra, const char *strb)
  * @param strb string b
  * @retval int damerau-levenshtein distance between strings
  */
-int dist_dam_lev(const char *stra, const char *strb)
+int dist_dam_lev(const char *stra, const char *strb, const struct Completion *comp)
 {
   int lena = mbs_char_count(stra);
   int lenb = mbs_char_count(strb);
