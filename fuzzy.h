@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include "config.h"
 #include "mutt/string2.h"
-#include "statemach.h"
+#include "completion.h"
 
 #define ISLONGMBYTE(mbyte) mblen(mbyte, MB_CUR_MAX) > 1
 #define MBCHARLEN(mbyte) mblen(mbyte, MB_CUR_MAX)

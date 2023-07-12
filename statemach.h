@@ -3,12 +3,14 @@
 #include <stdbool.h>
 #include <strings.h>
 #include <wchar.h>
-#include <regex.h>
+#include <locale.h>
 #include "mutt/array.h"
 #include "mutt/string2.h"
 #include "mutt/mbyte.h"
 #include "mutt_logging.h"
 #include "config.h"
+#include "completion.h"
+#include "fuzzy.h"
 
 #ifndef MAX_TYPED
 #define MAX_TYPED 100
@@ -23,59 +25,9 @@
     L, __FILE__, __LINE__, ##__VA_ARGS__)
 #endif
 
-typedef uint8_t MuttCompletionState;
-
-#ifndef MUTT_COMPL_NEW
-#define MUTT_COMPL_NEW        0        /// < Initial state
-#define MUTT_COMPL_INIT      (1 << 0)  /// < Initial state
-#define MUTT_COMPL_MULTI     (1 << 1)  /// < Multiple matches with common stem
-#define MUTT_COMPL_MATCH     (1 << 2)  /// < Match found
-#define MUTT_COMPL_NOMATCH   (1 << 3)  /// < No Match found
-#endif
-
-typedef uint8_t MuttCompletionFlags;
-#ifndef MUTT_COMPL_NO_FLAGS
-#define MUTT_COMPL_NO_FLAGS          0  /// < No flags are set
-#define MUTT_COMPL_IGNORECASE  (1 << 0) /// < Ignore the case of letters
-#define MUTT_COMPL_FIRSTMATCH  (1 << 1) /// < Return only the first match
-#endif
-
-typedef uint8_t MuttMatchFlags;
-#ifndef MUTT_MATCH_FLAGS
-#define MUTT_MATCH_EXACT           0  /// normal exact string matching
-#define MUTT_MATCH_FUZZY     (1 << 0) /// use fuzzy string matching
-#define MUTT_MATCH_REGEX     (2 << 0) /// use regular expression matching
-#endif
-
-#ifndef MUTT_MATCHING
-#define MUTT_MATCHING
-#define REGERRORSIZE 30
-#endif
-
 // TODO how can we best handle this...?
 // could use wcscoll as well (locale aware)
 #define WSTR_EQ(s1, s2) wcscmp(s1, s2) == 0
-
-struct CompItem {
-  wchar_t *str;
-  size_t mb_buf_len;
-  bool is_match;
-};
-
-ARRAY_HEAD(CompletionList, struct CompItem);
-
-struct Completion {
-  wchar_t *typed_str;
-  size_t typed_mb_len;
-  struct CompItem *cur_item;
-  size_t stem_len;
-  MuttCompletionState state;
-  MuttCompletionFlags flags;
-  struct CompletionList *items;
-  // store the compiled regcomp regex for faster list matching
-  bool regex_compiled;
-  regex_t *regex;
-};
 
 struct Completion *compl_new(MuttCompletionFlags flags);
 // TODO add an initialiser which takes a const ARRAY of strings with arbitrary size
