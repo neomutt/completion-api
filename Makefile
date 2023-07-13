@@ -24,7 +24,7 @@ OUT	= test_exact test_statemach test_matching test_regex test_fuzzy
 
 SRC_STATE	= test_statemach.c statemach.c fuzzy.c
 SRC_MATCH 	= test_matching.c fuzzy.c
-SRC_FUZZY 	= test_fuzzy.c fuzzy.c
+SRC_FUZZY 	= test_fuzzy.c fuzzy.c statemach.c
 SRC_REGEX 	= test_regex.c fuzzy.c
 SRC_EXACT	= test_exact.c statemach.c fuzzy.c
 
