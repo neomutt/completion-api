@@ -51,6 +51,12 @@ Completion *compl_new(MuttCompletionFlags flags)
   return comp;
 }
 
+void compl_free(Completion *comp) {
+  free(comp->typed_str);
+  ARRAY_FREE(comp->items);
+  regfree(comp->regex);
+}
+
 int compl_add(Completion *comp, const char *str, size_t buf_len)
 {
   if (!compl_health_check(comp))

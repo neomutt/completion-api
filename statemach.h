@@ -60,6 +60,8 @@
 #define WSTR_EQ(s1, s2) wcscmp(s1, s2) == 0
 
 Completion *compl_new(MuttCompletionFlags flags);
+void compl_free(Completion *comp);
+
 // TODO add an initialiser which takes a const ARRAY of strings with arbitrary size
 // TODO handle strings with dynamic size (keep track of longest string)
 int compl_add(Completion *comp, const char *str, const size_t buf_len);
