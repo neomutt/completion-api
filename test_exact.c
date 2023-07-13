@@ -1,7 +1,7 @@
 #include "config.h"
 #include "acutest.h"
-#include <stdio.h>
 #include <locale.h>
+#include <stdio.h>
 #include "mutt/lib.h"
 #include "statemach.h"
 
@@ -18,27 +18,27 @@ void test_match(void)
   // basic match and non-match
   TEST_CHECK(match_dist("Hello", "Hello", comp) == 0);
   TEST_CHECK(match_dist("Hello", "Bye", comp) == -1);
-  printf("\n\n");
   TEST_CHECK(match_dist("Übel", "Übel", comp) == 0);
   TEST_CHECK(match_dist("übel", "Übel", comp) == -1);
 
   // match substring only
-  TEST_CHECK(match_dist("Hel", "Hello", comp));
+  TEST_CHECK(match_dist("Hel", "Hello", comp) == 2);
 
   // match empty string
-  TEST_CHECK(match_dist("", "HELLO", comp));
-  TEST_CHECK(match_dist("", "neomuttisawesome", comp));
+  TEST_CHECK(match_dist("", "HELLO", comp) == 5);
+  TEST_CHECK(match_dist("", "neomuttisawesome", comp) == 16);
 
-  comp->flags = MUTT_MATCH_IGNORECASE;
+  comp->flags = MUTT_MATCH_EXACT | MUTT_MATCH_IGNORECASE;
   // match case-insensitive
-  TEST_CHECK(match_dist("hel", "Helloworld", comp));
-  TEST_CHECK(match_dist("HEL", "Helloworld", comp));
-  TEST_CHECK(match_dist("übel", "Übel", comp));
+  TEST_CHECK(match_dist("hel", "Helloworld", comp) == 7);
+  TEST_CHECK(match_dist("HEL", "Helloworld", comp) == 7);
+  TEST_CHECK(match_dist("übel", "Übel", comp) == 0);
 
   // match case-sensitive ONLY
-  TEST_CHECK(!match_dist("hel", "Helloworld", comp));
-  TEST_CHECK(!match_dist("HEL", "Helloworld", comp));
-  TEST_CHECK(match_dist("HEL", "HELloworld", comp));
+  comp->flags = MUTT_MATCH_EXACT;
+  TEST_CHECK(match_dist("hel", "Helloworld", comp) == -1);
+  TEST_CHECK(match_dist("HEL", "Helloworld", comp) == -1);
+  TEST_CHECK(match_dist("HEL", "HELloworld", comp) == 7);
 }
 
 void test_exact(void)
@@ -51,21 +51,32 @@ void test_exact(void)
   // test some regular ASCII strings
   TEST_CHECK(match_dist("abc", "Abc", comp) == -1);
   TEST_CHECK(match_dist("abc", "abc", comp) == 0);
-  comp->flags = MUTT_MATCH_EXACT & MUTT_MATCH_IGNORECASE;
+
+  comp->flags = MUTT_MATCH_EXACT | MUTT_MATCH_IGNORECASE;
   TEST_CHECK(match_dist("abc", "Abc", comp) == 0);
   TEST_CHECK(match_dist("wxy", "wxy", comp) == 0);
 
   // test multibyte comparison
   comp->flags = MUTT_MATCH_EXACT;
   TEST_CHECK(match_dist("äpfel", "Äpfel", comp) == -1);
-  comp->flags = MUTT_MATCH_EXACT & MUTT_MATCH_IGNORECASE;
+  comp->flags = MUTT_MATCH_EXACT | MUTT_MATCH_IGNORECASE;
   TEST_CHECK(match_dist("äpfel", "Äpfel", comp) == 0);
-  TEST_CHECK(match_dist("zabc", "öxrya", comp) == 0);
+  TEST_CHECK(match_dist("zabc", "öxrya", comp) == -1);
 
   // test some other symbols
+  comp->flags = MUTT_MATCH_EXACT;
   TEST_CHECK(match_dist("c", "Z", comp) == -1);
   TEST_CHECK(match_dist(";", "Z", comp) == -1);
   TEST_CHECK(match_dist("a", "!", comp) == -1);
+  TEST_CHECK(match_dist("ß", "ß😀", comp) == 1);
+  TEST_CHECK(match_dist("世", "世界", comp) == 1);
+
+  comp->flags = MUTT_MATCH_EXACT | MUTT_MATCH_IGNORECASE;
+  TEST_CHECK(match_dist("c", "Z", comp) == -1);
+  TEST_CHECK(match_dist(";", "Z", comp) == -1);
+  TEST_CHECK(match_dist("a", "!", comp) == -1);
+  TEST_CHECK(match_dist("ß", "ß😀", comp) == 1);
+  TEST_CHECK(match_dist("世", "世界", comp) == 1);
 }
 
 TEST_LIST = {
