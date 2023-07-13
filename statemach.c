@@ -46,7 +46,7 @@ Completion *compl_new(MuttCompletionFlags flags)
   logdeb(4, "Memory allocation for comp->items done.");
   ARRAY_INIT(comp->items);
 
-  comp->regex = NULL;
+  comp->regex = mutt_mem_calloc(1, sizeof(regex_t));
   comp->regex_compiled = false;
   return comp;
 }
@@ -115,6 +115,7 @@ int compl_type(Completion *comp, const char *str, size_t buf_len)
 
 bool compl_state_init(Completion *comp, char **result, size_t *match_len)
 {
+  logdeb(5, "Initialising completion...");
   int n_matches = 0;
   int dist = -1;
   CompletionItem *item = NULL;
@@ -231,7 +232,6 @@ char *compl_complete(Completion *comp)
       logerr("RegexCompilation: Error when compiling string. %s", errmsg);
 
       free(errmsg);
-      regfree(comp->regex);
 
       // TODO how do we handle a failed regex compilation
       // fall back to fuzzy matching instead
