@@ -1,12 +1,40 @@
+/**
+ * @file
+ * Autocompletion API
+ *
+ * @authors
+ * Copyright (C) 2023 Simon V. Reichel <simonreichel@giese-optik.de>
+ *
+ * @copyright
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 2 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @page completion neomutt completion API
+ *
+ * Neomutt completion API
+ */
 #include "statemach.h"
 
-struct Completion *compl_new(MuttCompletionFlags flags)
+Completion *compl_new(MuttCompletionFlags flags)
 {
-  struct Completion *comp = mutt_mem_calloc(1, sizeof(struct Completion));
+  Completion *comp = mutt_mem_calloc(1, sizeof(Completion));
 
   // initialise the typed string as empty
   comp->typed_str = mutt_mem_calloc(MAX_TYPED, sizeof(char));
-  logdeb(4, "Memory allocation for comp->typed_str done, bytes: %lu.", MAX_TYPED * sizeof(char));
+  logdeb(4, "Memory allocation for comp->typed_str done, bytes: %lu.",
+         MAX_TYPED * sizeof(char));
   strncpy(comp->typed_str, "", 1);
 
   comp->cur_item = NULL;
@@ -23,17 +51,20 @@ struct Completion *compl_new(MuttCompletionFlags flags)
   return comp;
 }
 
-int compl_add(struct Completion *comp, const char *str, size_t buf_len)
+int compl_add(Completion *comp, const char *str, size_t buf_len)
 {
-  if (!compl_health_check(comp)) return 0;
+  if (!compl_health_check(comp))
+    return 0;
 
-  if (!compl_str_check(str, buf_len)) return 0;
+  if (!compl_str_check(str, buf_len))
+    return 0;
 
-  struct CompItem new_item = { 0 };
+  CompletionItem new_item = { 0 };
 
   // use a conservative memory allocation
   new_item.str = mutt_mem_calloc(mutt_str_len(str) + 1, sizeof(char));
-  logdeb(4, "Mem alloc succeeded: new_item.str, bytes: %lu = %lu chars", (mutt_str_len(str) + 1) * sizeof(char), mutt_str_len(str));
+  logdeb(4, "Mem alloc succeeded: new_item.str, bytes: %lu = %lu chars",
+         (mutt_str_len(str) + 1) * sizeof(char), mutt_str_len(str));
   strncpy(new_item.str, str, buf_len);
 
   new_item.is_match = false;
@@ -56,11 +87,13 @@ int compl_add(struct Completion *comp, const char *str, size_t buf_len)
   return 1;
 }
 
-int compl_type(struct Completion *comp, const char *str, size_t buf_len)
+int compl_type(Completion *comp, const char *str, size_t buf_len)
 {
-  if (!compl_health_check(comp)) return 0;
+  if (!compl_health_check(comp))
+    return 0;
 
-  if (!compl_str_check(str, buf_len)) return 0;
+  if (!compl_str_check(str, buf_len))
+    return 0;
 
   // copy typed string into completion
   strncpy(comp->typed_str, str, buf_len);
@@ -74,11 +107,11 @@ int compl_type(struct Completion *comp, const char *str, size_t buf_len)
   return 1;
 }
 
-bool compl_state_init(struct Completion *comp, char **result, size_t *match_len)
+bool compl_state_init(Completion *comp, char **result, size_t *match_len)
 {
   int n_matches = 0;
   int dist = -1;
-  struct CompItem *item = NULL;
+  CompletionItem *item = NULL;
 
   ARRAY_FOREACH(item, comp->items)
   {
@@ -123,7 +156,7 @@ bool compl_state_init(struct Completion *comp, char **result, size_t *match_len)
   return true;
 }
 
-bool compl_state_match(struct Completion *comp, char **result, size_t *match_len)
+bool compl_state_match(Completion *comp, char **result, size_t *match_len)
 {
   comp->state = MUTT_COMPL_INIT;
   comp->cur_item = NULL;
@@ -133,9 +166,9 @@ bool compl_state_match(struct Completion *comp, char **result, size_t *match_len
   return true;
 }
 
-void compl_state_multi(struct Completion *comp, char **result, size_t *match_len)
+void compl_state_multi(Completion *comp, char **result, size_t *match_len)
 {
-  struct CompItem *item = NULL;
+  CompletionItem *item = NULL;
 
   // TODO is ARRAY_FOREACH_FROM overflow safe? It seems to work for now, but maybe check twice!
   ARRAY_FOREACH_FROM(item, comp->items, ARRAY_IDX(comp->items, comp->cur_item) + 1)
@@ -159,9 +192,10 @@ void compl_state_multi(struct Completion *comp, char **result, size_t *match_len
   }
 }
 
-char *compl_complete(struct Completion *comp)
+char *compl_complete(Completion *comp)
 {
-  if (!compl_health_check(comp)) return NULL;
+  if (!compl_health_check(comp))
+    return NULL;
 
   if (ARRAY_EMPTY(comp->items))
   {
@@ -170,7 +204,8 @@ char *compl_complete(struct Completion *comp)
   }
 
   // recompile out-of-date regex
-  if ((comp->flags & MUTT_MATCH_REGEX) && !comp->regex_compiled) {
+  if ((comp->flags & MUTT_MATCH_REGEX) && !comp->regex_compiled)
+  {
     // TODO move error handling to own function?
     int errcode = regcomp(comp->regex, comp->typed_str, REG_EXTENDED);
     if (errcode != 0)
@@ -210,11 +245,13 @@ char *compl_complete(struct Completion *comp)
   switch (comp->state)
   {
     case MUTT_COMPL_INIT:
-      if (!compl_state_init(comp, &result, &match_len)) return NULL;
+      if (!compl_state_init(comp, &result, &match_len))
+        return NULL;
       break;
 
     case MUTT_COMPL_MATCH: // return to typed string after matching single item
-      if (!compl_state_match(comp, &result, &match_len)) return NULL;
+      if (!compl_state_match(comp, &result, &match_len))
+        return NULL;
       break;
 
     case MUTT_COMPL_MULTI: // use next match
@@ -232,10 +269,11 @@ char *compl_complete(struct Completion *comp)
   return match;
 }
 
-int compl_health_check(const struct Completion *comp)
+int compl_health_check(const Completion *comp)
 {
-  if (!comp) {
-    logerr("CompHealth: null pointer struct.");
+  if (!comp)
+  {
+    logerr("CompHealth: null pointer Completion struct.");
     return 0;
   }
   if (!comp->typed_str)
@@ -285,18 +323,20 @@ int compl_char_check(const char *str, size_t buf_len)
   return 1;
 }
 
-int compl_get_size(struct Completion *comp)
+int compl_get_size(Completion *comp)
 {
   return ARRAY_SIZE(comp->items);
 }
 
-bool compl_check_duplicate(const struct Completion *comp, const char *str, size_t buf_len)
+bool compl_check_duplicate(const Completion *comp, const char *str, size_t buf_len)
 {
-  if (!compl_health_check(comp)) return true;
+  if (!compl_health_check(comp))
+    return true;
 
-  if (!compl_char_check(str, buf_len)) return true;
+  if (!compl_char_check(str, buf_len))
+    return true;
 
-  struct CompItem *item;
+  CompletionItem *item;
   ARRAY_FOREACH(item, comp->items)
   {
     if (mutt_str_cmp(item->str, str) == 0)
@@ -317,7 +357,7 @@ bool compl_check_duplicate(const struct Completion *comp, const char *str, size_
  * @param regex compiled regular expression
  * @retval int distance between the strings (or -1 if no match at all)
  */
-static int dist_regex(const char *src, const char *tar, const struct Completion *comp)
+static int dist_regex(const char *src, const char *tar, const Completion *comp)
 {
   int dist = -1;
   regmatch_t pmatch[1];
@@ -345,13 +385,13 @@ static int dist_regex(const char *src, const char *tar, const struct Completion 
 /**
  * matches the source against the target string, using exact comparison.
  * Returns -1 if there is no match, or 0 if the strings match.
- * If MUTT_COMPL_IGNORECASE is set, it will ignore case.
+ * If MUTT_MATCH_IGNORECASE is set, it will ignore case.
  *
  * @param src source string
  * @param tar target string
  * @param flags completion flags
  */
-static int dist_exact(const char *src, const char *tar, const struct Completion *comp)
+static int dist_exact(const char *src, const char *tar, const Completion *comp)
 {
   int len_src = MBCHARLEN(src);
   int len_tar = MBCHARLEN(tar);
@@ -408,7 +448,7 @@ static int dist_exact(const char *src, const char *tar, const struct Completion 
  * @param strb target string
  * @retval int distance between the strings (or -1 if no match at all)
  */
-int match_dist(const char *src, const char *tar, const struct Completion *comp)
+int match_dist(const char *src, const char *tar, const Completion *comp)
 {
   int dist = 0;
 

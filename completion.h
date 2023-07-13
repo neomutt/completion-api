@@ -37,17 +37,17 @@ typedef uint8_t MuttMatchFlags;
 
 #ifndef MUTT_COMPLETION
 #define MUTT_COMPLETION
-struct CompItem {
+typedef struct CompletionItem {
   char *str;
   int match_dist;
   bool is_match;
-};
+} CompletionItem;
 
-ARRAY_HEAD(CompletionList, struct CompItem);
+ARRAY_HEAD(CompletionList, CompletionItem);
 
-struct Completion {
+typedef struct Completion {
   char *typed_str;
-  struct CompItem *cur_item;
+  CompletionItem *cur_item;
   size_t stem_len;
   MuttCompletionState state;
   MuttCompletionFlags flags;
@@ -55,5 +55,5 @@ struct Completion {
   // store the compiled regcomp regex for faster list matching
   bool regex_compiled;
   regex_t *regex;
-};
+} Completion;
 #endif

@@ -1,3 +1,31 @@
+/**
+ * @file
+ * Autocompletion API
+ *
+ * @authors
+ * Copyright (C) 2023 Simon V. Reichel <simonreichel@giese-optik.de>
+ *
+ * @copyright
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 2 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @page completion neomutt completion API
+ *
+ * Neomutt completion API
+ */
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -25,30 +53,32 @@
     L, __FILE__, __LINE__, ##__VA_ARGS__)
 #endif
 
+#ifndef WSTR_EQ
 // TODO how can we best handle this...?
 // could use wcscoll as well (locale aware)
 #define WSTR_EQ(s1, s2) wcscmp(s1, s2) == 0
 
-struct Completion *compl_new(MuttCompletionFlags flags);
+Completion *compl_new(MuttCompletionFlags flags);
 // TODO add an initialiser which takes a const ARRAY of strings with arbitrary size
 // TODO handle strings with dynamic size (keep track of longest string)
-int compl_add(struct Completion *comp, const char *str, const size_t buf_len);
-int compl_type(struct Completion *comp, const char *str, const size_t buf_len);
+int compl_add(Completion *comp, const char *str, const size_t buf_len);
+int compl_type(Completion *comp, const char *str, const size_t buf_len);
 
 // TODO take a default string (multibyte instead of wchar_t
-bool compl_state_init(struct Completion *comp, char **result, size_t *match_len);
-bool compl_state_match(struct Completion *comp, char **result, size_t *match_len);
-void compl_state_multi(struct Completion *comp, char **result, size_t *match_len);
+bool compl_state_init(Completion *comp, char **result, size_t *match_len);
+bool compl_state_match(Completion *comp, char **result, size_t *match_len);
+void compl_state_multi(Completion *comp, char **result, size_t *match_len);
 
-char* compl_complete(struct Completion *comp);
+char* compl_complete(Completion *comp);
 
 // these are helper functions to check string health etc.
 // TODO there must be equivalent mutt functions to handle user input safely
-int compl_health_check(const struct Completion *comp);
+int compl_health_check(const Completion *comp);
 int compl_str_check(const char *str, const size_t buf_len);
 int compl_str_check(const char *str, const size_t buf_len);
-int compl_get_size(struct Completion *comp);
-bool compl_check_duplicate(const struct Completion *comp, const char *str, const size_t buf_len);
+int compl_get_size(Completion *comp);
+bool compl_check_duplicate(const Completion *comp, const char *str, const size_t buf_len);
 
 // the main matching function
-int match_dist(const char *src, const char *tar, const struct Completion *comp);
+int match_dist(const char *src, const char *tar, const Completion *comp);
+#endif
