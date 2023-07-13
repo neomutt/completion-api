@@ -20,35 +20,33 @@ LDFLAGS	+= -fprofile-arcs -ftest-coverage
 # CFLAGS	+= -fsanitize=address -fsanitize-recover=address
 # LDFLAGS	+= -fsanitize=address -fsanitize-recover=address
 
-OUT	= test_completion test_statemach test_matching test_regex test_fuzzy
+OUT	= test_exact test_statemach test_matching test_regex test_fuzzy
 
-SRC_SHARED	= completion.c
-SRC_STATE	= test_statemach.c statemach.c
-SRC_MATCH 	= test_matching.c matching.c fuzzy.c
+SRC_STATE	= test_statemach.c statemach.c fuzzy.c
+SRC_MATCH 	= test_matching.c fuzzy.c
 SRC_FUZZY 	= test_fuzzy.c fuzzy.c
-SRC_REGEX 	= test_regex.c matching.c fuzzy.c
-SRC_COMP	= test_completion.c
+SRC_REGEX 	= test_regex.c fuzzy.c
+SRC_EXACT	= test_exact.c statemach.c fuzzy.c
 
-OBJ_SHARED	= $(SRC_SHARED:%.c=%.o)
-OBJ_STATE	= $(SRC_STATE:%.c=%.o) $(OBJ_SHARED)
 OBJ_MATCH	= $(SRC_MATCH:%.c=%.o)
 OBJ_FUZZY	= $(SRC_FUZZY:%.c=%.o)
 OBJ_REGEX	= $(SRC_REGEX:%.c=%.o)
-OBJ_COMP	= $(SRC_COMP:%.c=%.o) $(OBJ_SHARED)
+OBJ_EXACT	= $(SRC_EXACT:%.c=%.o)
+OBJ_STATE	= $(SRC_STATE:%.c=%.o) $(OBJ_FUZZY)
 
 all: $(OUT)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-matching.o: matching.c fuzzy.o
+matching.o: matching.c fuzzy.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 test_statemach: $(OBJ_STATE)
 	$(CC) -o $@ $(OBJ_STATE) $(LDFLAGS)
 
-test_completion: $(OBJ_COMP)
-	$(CC) -o $@ $(OBJ_COMP) $(LDFLAGS)
+test_exact: $(OBJ_EXACT)
+	$(CC) -o $@ $(OBJ_EXACT) $(LDFLAGS)
 
 test_matching: $(OBJ_MATCH)
 	$(CC) -o $@ $(OBJ_MATCH) $(LDFLAGS)
@@ -59,14 +57,14 @@ test_fuzzy: $(OBJ_FUZZY)
 test_regex: $(OBJ_REGEX)
 	$(CC) -o $@ $(OBJ_REGEX) $(LDFLAGS)
 
-test:	test_statemach test_completion test_matching test_fuzzy
+test:	test_statemach test_exact test_matching test_fuzzy
 	./test_statemach
-	./test_completion
+	./test_exact
 	./test_matching
 	./test_fuzzy
 
 clean:
-	$(RM) $(OBJ_SHARED) $(OBJ_STATE) $(OBJ_COMP) $(OBJ_MATCH) $(OBJ_FUZZY) $(OBJ_REGEX) $(OUT)
+	$(RM) $(OBJ_SHARED) $(OBJ_STATE) $(OBJ_EXACT) $(OBJ_MATCH) $(OBJ_FUZZY) $(OBJ_REGEX) $(OUT)
 
 distclean: clean
 	$(RM) tags
@@ -77,7 +75,7 @@ tags:	$(SRC) $(HDR) force
 	ctags -R .
 
 lcov: all test force
-	$(RM) lcov test_statemach.gc?? test_completion.gc??
+	$(RM) lcov test_statemach.gc?? test_exact.gc??
 	lcov -t "result" -o lcov.info -c -d .
 	genhtml -o lcov lcov.info
 
@@ -85,7 +83,7 @@ format: *.c
 	clang-format -i $?
 
 compile_commands:
-	bear make all
+	bear -- make all
 
 force:
 
