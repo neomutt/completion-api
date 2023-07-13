@@ -393,48 +393,55 @@ static int dist_regex(const char *src, const char *tar, const Completion *comp)
  */
 static int dist_exact(const char *src, const char *tar, const Completion *comp)
 {
-  int len_src = MBCHARLEN(src);
-  int len_tar = MBCHARLEN(tar);
+  bool src_mbs = is_mbs(src);
+  bool tar_mbs = is_mbs(tar);
 
-  // if only one of them is a multibyte, they can't be the same
-  if (len_src == -1 || len_tar == -1)
+  int len_src = mutt_str_len(src);
+  int len_tar = mutt_str_len(tar);
+
+  // source string length needs to be shorter for substring matching
+  if (len_src > len_tar)
     return -1;
 
-  // string lengths need to match exactly
-  if (len_src != len_tar)
-    return -1;
-
-  // not a multibyte string: use ascii comparison functions
-  if (len_src == -1)
+  // compare all bytes of src with tar
+  if (comp->flags & MUTT_MATCH_IGNORECASE)
   {
-    // ignore-case match
-    if ((comp->flags & MUTT_MATCH_IGNORECASE) && (strcasecmp(src, tar) == 0))
+    if (src_mbs || tar_mbs)
     {
-      return 0;
-    }
-    // case-sensitive match
-    else if (strcmp(src, tar) == 0)
-    {
-      return 0;
+      len_src = mbs_char_count(src);
+      len_tar = mbs_char_count(tar);
+      wchar_t w_src[len_src + 1];
+      wchar_t w_tar[len_tar + 1];
+      mbstowcs(w_src, src, len_src + 1);
+      mbstowcs(w_tar, tar, len_src + 1);
+
+      for (int i = 0; i < mbs_char_count(src); i++)
+      {
+        if (iswalpha(w_src[i]) && iswalpha(w_tar[i])) {
+          if (towlower(w_src[i]) != towlower(w_tar[i]))
+            return -1;
+        }
+        else if (w_src[i] != w_tar[i]) {
+          return -1;
+        }
+      }
+
+      return (len_tar - len_src);
     }
 
-    // no match
-    return -1;
+    if (strncasecmp(src, tar, len_src) == 0)
+      return len_tar - len_src;
   }
+  else {
+    if (strncmp(src, tar, len_src) != 0)
+      return -1;
 
-  // a multibyte string: convert to widechar and compare
-  wchar_t w_src[len_src + 1];
-  wchar_t w_tar[len_src + 1];
-  mbstowcs(w_src, src, len_src);
-  mbstowcs(w_tar, tar, len_tar);
-
-  // ignore-case match
-  if ((comp->flags & MUTT_MATCH_IGNORECASE) && (wcscasecmp(w_src, w_tar) == 0))
-    return 0;
-
-  // case-sensitive match
-  if (wcscmp(w_src, w_tar))
-    return 0;
+    // insertions are calculated differently for mbs
+    if (src_mbs || tar_mbs)
+      return (mbs_char_count(tar) - mbs_char_count(src));
+    else
+      return len_tar - len_src;
+  }
 
   // no match
   return -1;

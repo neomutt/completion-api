@@ -31,6 +31,7 @@
 #include <stdbool.h>
 #include <strings.h>
 #include <wchar.h>
+#include <wctype.h>
 #include <locale.h>
 #include "mutt/array.h"
 #include "mutt/string2.h"
