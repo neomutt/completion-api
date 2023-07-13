@@ -1,8 +1,9 @@
 #include "config.h"
 #include "acutest.h"
 #include <stdio.h>
+#include <locale.h>
 #include "mutt/lib.h"
-#include "completion.h"
+#include "statemach.h"
 
 #define STR_EQ(s1, s2) strcmp(s1, s2) == 0
 #define STR_DF(s1, s2) strcmp(s1, s2) != 0
@@ -11,40 +12,40 @@ void test_match(void)
 {
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
-  MuttCompletionFlags flags = MUTT_COMPL_NO_FLAGS;
+  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  comp->flags = MUTT_MATCH_EXACT;
 
   // basic match and non-match
-  TEST_CHECK(match(L"Hello", L"Hello", flags));
-  TEST_CHECK(!match(L"Hello", L"Bye", flags));
+  TEST_CHECK(match_dist("Hello", "Hello", comp) == 0);
+  TEST_CHECK(match_dist("Hello", "Bye", comp) == -1);
   printf("\n\n");
-  TEST_CHECK(match(L"Übel", L"Übel", flags));
-  TEST_CHECK(!match(L"übel", L"Übel", flags));
+  TEST_CHECK(match_dist("Übel", "Übel", comp) == 0);
+  TEST_CHECK(match_dist("übel", "Übel", comp) == -1);
 
   // match substring only
-  TEST_CHECK(match(L"Hel", L"Hello", flags));
+  TEST_CHECK(match_dist("Hel", "Hello", comp));
 
   // match empty string
-  TEST_CHECK(match(L"", L"HELLO", flags));
-  TEST_CHECK(match(L"", L"neomuttisawesome", flags));
+  TEST_CHECK(match_dist("", "HELLO", comp));
+  TEST_CHECK(match_dist("", "neomuttisawesome", comp));
 
-  flags = MUTT_COMPL_IGNORECASE;
+  comp->flags = MUTT_MATCH_IGNORECASE;
   // match case-insensitive
-  TEST_CHECK(match(L"hel", L"Helloworld", flags));
-  TEST_CHECK(match(L"HEL", L"Helloworld", flags));
-  TEST_CHECK(match(L"übel", L"Übel", flags));
+  TEST_CHECK(match_dist("hel", "Helloworld", comp));
+  TEST_CHECK(match_dist("HEL", "Helloworld", comp));
+  TEST_CHECK(match_dist("übel", "Übel", comp));
 
-  flags = MUTT_COMPL_NO_FLAGS;
   // match case-sensitive ONLY
-  TEST_CHECK(!match(L"hel", L"Helloworld", flags));
-  TEST_CHECK(!match(L"HEL", L"Helloworld", flags));
-  TEST_CHECK(match(L"HEL", L"HELloworld", flags));
+  TEST_CHECK(!match_dist("hel", "Helloworld", comp));
+  TEST_CHECK(!match_dist("HEL", "Helloworld", comp));
+  TEST_CHECK(match_dist("HEL", "HELloworld", comp));
 }
 
 void test_exact(void)
 {
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
-  struct Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
   comp->flags = MUTT_MATCH_EXACT;
 
   // test some regular ASCII strings
