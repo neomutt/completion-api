@@ -1,11 +1,10 @@
 #include "config.h"
 #include "acutest.h"
 #include "statemach.h"
+#include "completion.h"
 
 #define STR_EQ(s1, s2) strcmp(s1, s2) == 0
 #define STR_DF(s1, s2) strcmp(s1, s2) != 0
-
-typedef struct Completion Completion;
 
 void state_init(void)
 {
@@ -34,6 +33,8 @@ void malformed_input(void)
   // calling with small buffer size
   TEST_CHECK(compl_type(comp, "abcd", 1) == 0);
   TEST_CHECK(compl_add(comp, "abcd", 1) == 0);
+
+  compl_free(comp);
 }
 
 void state_empty(void)
@@ -47,6 +48,8 @@ void state_empty(void)
   result = compl_complete(comp);
 
   TEST_CHECK(result == NULL);
+
+  compl_free(comp);
 }
 
 void state_nomatch(void)
@@ -67,6 +70,8 @@ void state_nomatch(void)
   result = compl_complete(comp);
 
   TEST_CHECK(result == NULL);
+
+  compl_free(comp);
 }
 
 void state_single(void)
@@ -92,6 +97,8 @@ void state_single(void)
   result = compl_complete(comp);
   printf("  ar -> ar: (%s)\n", result);
   TEST_CHECK(STR_EQ(result, "ar"));
+
+  compl_free(comp);
 }
 
 void state_single_utf8(void)
@@ -99,7 +106,7 @@ void state_single_utf8(void)
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
-  Completion *comp = compl_new(MUTT_COMPL_IGNORECASE);
+  Completion *comp = compl_new(MUTT_MATCH_IGNORECASE);
 
   compl_add(comp, "apfel", 6);
   compl_add(comp, "apple", 6);
@@ -118,6 +125,8 @@ void state_single_utf8(void)
   result = compl_complete(comp);
   printf("  äp -> äp: (%s)\n", result);
   TEST_CHECK(STR_EQ(result, "äp"));
+
+  compl_free(comp);
 }
 
 void state_multi(void)
@@ -126,6 +135,7 @@ void state_multi(void)
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
   Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  comp->flags = MUTT_MATCH_EXACT;
 
   compl_add(comp, "apfel", 6);
   compl_add(comp, "apple", 6);
@@ -154,6 +164,8 @@ void state_multi(void)
   result = compl_complete(comp);
   printf("  ap -> %s\n", result);
   TEST_CHECK(STR_EQ(result, "ap"));
+
+  compl_free(comp);
 }
 
 void duplicate_add(void)
@@ -180,6 +192,8 @@ void duplicate_add(void)
   compl_add(comp, "Äpfel", 6);
   printf("Another duplicate, this time unicode...\n");
   TEST_CHECK(compl_get_size(comp) == 3);
+
+  compl_free(comp);
 }
 
 TEST_LIST = {
