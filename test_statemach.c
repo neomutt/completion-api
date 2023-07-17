@@ -17,7 +17,7 @@ void state_init_from_array(void)
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
 
-  struct StringList list = ARRAY_HEAD_INITIALIZER;
+  struct CompletionStringList list = ARRAY_HEAD_INITIALIZER;
   /* char *a = mutt_mem_calloc(6, sizeof(char)); */
   /* a = "apfel\0"; */
   ARRAY_ADD(&list, "apfel");                                                  \

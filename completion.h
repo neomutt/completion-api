@@ -43,6 +43,7 @@ typedef struct CompletionItem {
 } CompletionItem;
 
 ARRAY_HEAD(CompletionList, CompletionItem);
+ARRAY_HEAD(CompletionStringList, char *);
 
 typedef struct Completion {
   char *typed_str;

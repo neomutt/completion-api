@@ -52,6 +52,19 @@ Completion *compl_new(enum MuttMatchMode mode)
   return comp;
 }
 
+Completion * compl_from_array(const struct CompletionStringList *list, enum MuttMatchMode mode)
+{
+  Completion *comp = compl_new(mode);
+
+  char **item;
+  ARRAY_FOREACH(item, list)
+  {
+    compl_add(comp, *item, mutt_str_len(*item) + 1);
+  };
+
+  return comp;
+}
+
 void compl_free(Completion *comp) {
   free(comp->typed_str);
   ARRAY_FREE(comp->items);
@@ -363,7 +376,7 @@ bool compl_check_duplicate(const Completion *comp, const char *str, size_t buf_l
     {
       return true;
     }
-  }
+  };
 
   return false;
 }
