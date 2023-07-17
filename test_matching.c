@@ -4,7 +4,7 @@
 
 void test_match_simple()
 {
-  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_MATCH_EXACT);
   comp->typed_str = "apples";
   char *tar = "applers";
 

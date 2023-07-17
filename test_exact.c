@@ -12,7 +12,7 @@ void test_match(void)
 {
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
-  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_MATCH_EXACT);
   comp->flags = MUTT_MATCH_EXACT;
 
   // basic match and non-match
@@ -55,7 +55,7 @@ void test_exact(void)
 {
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
-  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_MATCH_EXACT);
   comp->flags = MUTT_MATCH_EXACT;
 
   // test some regular ASCII strings
