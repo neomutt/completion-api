@@ -274,12 +274,11 @@ char *compl_complete(Completion *comp)
       return NULL;
   }
 
-  return result;
-  // convert result back to multibyte
-  /* char *match = mutt_mem_calloc(match_len + 1, sizeof(char)); */
-  /* strncpy(match, result, match_len + 1); */
-  /* logdeb(4, "Match is '%s' (buf:%lu)\n", match, mutt_str_len(match)); */
-  /* return match; */
+  // convert result into new pointer for user
+  char *match = mutt_mem_calloc(match_len + 1, sizeof(char));
+  strncpy(match, result, match_len + 1);
+  logdeb(4, "Match is '%s' (buf:%lu)\n", match, mutt_str_len(match));
+  return match;
 }
 
 int compl_health_check(const Completion *comp)
