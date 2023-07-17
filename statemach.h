@@ -59,7 +59,7 @@
 // could use wcscoll as well (locale aware)
 #define WSTR_EQ(s1, s2) wcscmp(s1, s2) == 0
 
-Completion *compl_new(MuttCompletionFlags flags);
+Completion *compl_new(MuttMatchFlags flags);
 void compl_free(Completion *comp);
 
 int compl_compile_regex(Completion *comp);

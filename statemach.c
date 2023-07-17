@@ -27,7 +27,7 @@
  */
 #include "statemach.h"
 
-Completion *compl_new(MuttCompletionFlags flags)
+Completion *compl_new(MuttMatchFlags flags)
 {
   Completion *comp = mutt_mem_calloc(1, sizeof(Completion));
 

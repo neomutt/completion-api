@@ -20,7 +20,7 @@ void malformed_input(void)
   TEST_CHECK(compl_type(NULL, "hi", 3) == 0);
   TEST_CHECK(!compl_complete(NULL));
 
-  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_MATCH_EXACT);
 
   // calling with null pointer string
   TEST_CHECK(compl_type(comp, NULL, 5) == 0);
@@ -42,7 +42,7 @@ void state_empty(void)
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
-  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_MATCH_EXACT);
 
   char *result = NULL;
   result = compl_complete(comp);
@@ -57,7 +57,7 @@ void state_nomatch(void)
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
-  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_MATCH_EXACT);
 
   compl_add(comp, "apfel", 6);
   compl_add(comp, "apple", 6);
@@ -79,7 +79,7 @@ void state_single(void)
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
-  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_MATCH_EXACT);
 
   compl_add(comp, "apple", 6);
   compl_add(comp, "apply", 6);
@@ -106,7 +106,7 @@ void state_single_utf8(void)
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
-  Completion *comp = compl_new(MUTT_MATCH_IGNORECASE);
+  Completion *comp = compl_new(MUTT_MATCH_EXACT | MUTT_MATCH_IGNORECASE);
 
   compl_add(comp, "apfel", 6);
   compl_add(comp, "apple", 6);
@@ -134,8 +134,7 @@ void state_multi(void)
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
-  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
-  comp->flags = MUTT_MATCH_EXACT;
+  Completion *comp = compl_new(MUTT_MATCH_EXACT);
 
   compl_add(comp, "apfel", 6);
   compl_add(comp, "apple", 6);
@@ -171,7 +170,7 @@ void state_multi(void)
 void duplicate_add(void)
 {
   printf("\n");
-  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  Completion *comp = compl_new(MUTT_MATCH_EXACT);
 
   compl_add(comp, "apfel", 6);
   compl_add(comp, "apple", 6);
