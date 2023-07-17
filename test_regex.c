@@ -8,7 +8,7 @@
 
 void test_simple_regex(void)
 {
-  Completion *comp = compl_new(MUTT_MATCH_REGEX);
+  Completion *comp = compl_new(COMPL_MODE_REGEX);
 
   // TODO what about locale unset cases?
   comp->typed_str = ".+pple";

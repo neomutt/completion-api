@@ -27,7 +27,7 @@
  */
 #include "statemach.h"
 
-Completion *compl_new(MuttMatchFlags flags)
+Completion *compl_new(enum MuttMatchMode mode)
 {
   Completion *comp = mutt_mem_calloc(1, sizeof(Completion));
 
@@ -40,7 +40,8 @@ Completion *compl_new(MuttMatchFlags flags)
   comp->cur_item = NULL;
 
   comp->state = MUTT_COMPL_NEW;
-  comp->flags = flags;
+  comp->mode = mode;
+  comp->flags = MUTT_MATCH_NOFLAGS;
 
   comp->items = mutt_mem_calloc(1, sizeof(struct CompletionList));
   logdeb(4, "Memory allocation for comp->items done.");
@@ -94,32 +95,39 @@ int compl_add(Completion *comp, const char *str, size_t buf_len)
 }
 
 int compl_compile_regex(Completion *comp) {
-    int errcode = regcomp(comp->regex, comp->typed_str, REG_EXTENDED | REG_NEWLINE);
+  int comp_flags = REG_EXTENDED | REG_NEWLINE;
 
-    // successful compilation
-    if (errcode == 0)
-    {
-      comp->regex_compiled = true;
-      return 1;
-    }
+  printf("a: %d\n", comp_flags);
+  if (comp->flags & MUTT_MATCH_IGNORECASE)
+    comp_flags |= REG_ICASE;
+  printf("b: %d\n", comp_flags);
 
-    // try a error message size of 20 first
-    char *errmsg = calloc(20, sizeof(char));
-    int errsize = regerror(errcode, comp->regex, errmsg, 20);
+  int errcode = regcomp(comp->regex, comp->typed_str, comp_flags);
 
-    // potential reallocation to fit the whole error message
-    if (errsize >= 20)
-    {
-      free(errmsg);
-      char *errmsg = calloc(errsize, sizeof(char));
-      regerror(errcode, comp->regex, errmsg, errsize);
-    }
+  // successful compilation
+  if (errcode == 0)
+  {
+    comp->regex_compiled = true;
+    return 1;
+  }
 
-    logerr("RegexCompilation: Error when compiling string. %s", errmsg);
+  // try a error message size of 20 first
+  char *errmsg = calloc(20, sizeof(char));
+  int errsize = regerror(errcode, comp->regex, errmsg, 20);
 
+  // potential reallocation to fit the whole error message
+  if (errsize >= 20)
+  {
     free(errmsg);
-    comp->regex_compiled = false;
-    return 0;
+    char *errmsg = calloc(errsize, sizeof(char));
+    regerror(errcode, comp->regex, errmsg, errsize);
+  }
+
+  logerr("RegexCompilation: Error when compiling string. %s", errmsg);
+
+  free(errmsg);
+  comp->regex_compiled = false;
+  return 0;
 }
 
 int compl_type(Completion *comp, const char *str, size_t buf_len)
@@ -239,14 +247,14 @@ char *compl_complete(Completion *comp)
   }
 
   // recompile out-of-date regex
-  if ((comp->flags & MUTT_MATCH_REGEX) && !comp->regex_compiled)
+  if ((comp->mode == COMPL_MODE_REGEX) && !comp->regex_compiled)
   {
     if (compl_compile_regex(comp) != 0)
     {
       return NULL;
       // TODO how do we handle a failed regex compilation
       // fall back to fuzzy matching instead?
-      // comp->flags = comp->flags & MUTT_MATCH_FUZZY;
+      // comp->mode = comp->flags & COMPL_MODE_FUZZY;
     }
   }
 
@@ -382,9 +390,6 @@ static int dist_regex(const char *tar, const Completion *comp)
   /* int regex_flags = REG_EXTENDED | REG_NOTEOL | REG_NOTBOL; */
   int regex_flags = REG_EXTENDED;
 
-  if (comp->flags & MUTT_MATCH_IGNORECASE)
-    regex_flags = regex_flags | REG_ICASE;
-
   // check for a match
   if (regexec(comp->regex, tar, 1, pmatch, regex_flags) == REG_NOMATCH)
   {
@@ -486,13 +491,13 @@ int match_dist(const char *tar, const Completion *comp)
 {
   int dist = -1;
 
-  switch (comp->flags)
+  switch (comp->mode)
   {
-    case MUTT_MATCH_FUZZY:
+    case COMPL_MODE_FUZZY:
       return dist_dam_lev(tar, comp);
-    case MUTT_MATCH_REGEX:
+    case COMPL_MODE_REGEX:
       return dist_regex(tar, comp);
-    case MUTT_MATCH_EXACT:
+    case COMPL_MODE_EXACT:
     default:
       return dist_exact(tar, comp);
   }

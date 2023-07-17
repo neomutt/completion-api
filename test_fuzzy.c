@@ -85,7 +85,7 @@ void test_damerau_levenshtein(void)
 {
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
-  Completion *comp = compl_new(MUTT_MATCH_EXACT);
+  Completion *comp = compl_new(COMPL_MODE_FUZZY);
 
   // null pointers checks
   comp->typed_str = NULL;

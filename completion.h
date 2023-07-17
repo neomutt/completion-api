@@ -14,14 +14,19 @@ typedef uint8_t MuttCompletionState;
 #define MUTT_COMPL_NOMATCH   (1 << 3)  /// < No Match found
 #endif
 
-#ifndef MUTT_MATCH_EXACT
+#ifndef MUTT_MATCH_NOFLAGS
+enum MuttMatchMode
+{
+  COMPL_MODE_EXACT = 1,
+  COMPL_MODE_FUZZY,
+  COMPL_MODE_REGEX
+};
+
 typedef uint8_t MuttMatchFlags;
 
-#define MUTT_MATCH_EXACT             0  /// normal exact string matching
-#define MUTT_MATCH_FUZZY       (1 << 1) /// use fuzzy string matching
-#define MUTT_MATCH_REGEX       (1 << 2) /// use regular expression matching
-#define MUTT_MATCH_IGNORECASE  (1 << 3) /// ignore the case of letters
-#define MUTT_MATCH_FIRSTMATCH  (1 << 4) /// < Return only the first match
+#define MUTT_MATCH_NOFLAGS           0
+#define MUTT_MATCH_IGNORECASE  (1 << 1) /// ignore case when matching
+#define MUTT_MATCH_FIRSTMATCH  (1 << 2) /// < Return only the first match
 #endif
 
 #ifndef MUTT_MATCHING
@@ -44,6 +49,7 @@ typedef struct Completion {
   CompletionItem *cur_item;
   size_t stem_len;
   MuttCompletionState state;
+  enum MuttMatchMode mode;
   MuttMatchFlags flags;
   struct CompletionList *items;
   // store the compiled regcomp regex for faster list matching
