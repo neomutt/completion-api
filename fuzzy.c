@@ -24,6 +24,21 @@ static int min(const int a, const int b, const int c)
   }
 }
 
+bool is_mbs(const char *str)
+{
+  if (str == NULL)
+    return false;
+
+  while (*str != '\0')
+  {
+    if (MBCHARLEN(str) > 1)
+      return true;
+    str++;
+  }
+
+  return false;
+}
+
 /**
  * mbs_char_count - count the number of multibyte characters
  *
