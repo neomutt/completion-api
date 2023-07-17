@@ -52,23 +52,19 @@ int mbs_char_count(const char *str)
 {
   int i = 0, len = 0;
 
-  if (!str) {
+  if (!str)
     return 0;
-  }
 
-  while (str[i] && str[i] != '\0') {
+  while (str[i] && str[i] != '\0')
+  {
     // TODO does this make sense?
     if (ISBADMBYTE(&str[i]))
-    {
-      return -1 ;
-    }
-
-    else if (ISLONGMBYTE(&str[i])){
+      return -1;
+    else if (ISLONGMBYTE(&str[i]))
       i += mblen(&str[i], MB_CUR_MAX);
-    }
-    else {
+    else
       i += 1;
-    }
+
     len += 1;
   }
 
@@ -93,13 +89,15 @@ bool mb_equal(const char *stra, const char *strb)
 
   int m = 0;
   // long mbytes need to be considered as a single symbol
-  if (ISLONGMBYTE(stra) || ISLONGMBYTE(strb)) {
+  if (ISLONGMBYTE(stra) || ISLONGMBYTE(strb))
+  {
     // length of mbyte sequences missmatching? different characters
     if (MBCHARLEN(stra) != MBCHARLEN(strb))
       return false;
 
     // check each byte of the mbyte sequence matches
-    else {
+    else
+    {
       for (m = 0; m < MBCHARLEN(stra); m++)
       {
         if (stra[m] != strb[m])
@@ -153,10 +151,9 @@ int dist_lev(const char *stra, const char *strb)
   }
   else
   {
-    return 1 + min(
-        dist_lev(&stra[MBCHARLEN(stra)], strb),
-        dist_lev(stra, &strb[MBCHARLEN(strb)]),
-        dist_lev(&stra[MBCHARLEN(stra)], &strb[MBCHARLEN(strb)]));
+    return 1 + min(dist_lev(&stra[MBCHARLEN(stra)], strb),
+                   dist_lev(stra, &strb[MBCHARLEN(strb)]),
+                   dist_lev(&stra[MBCHARLEN(stra)], &strb[MBCHARLEN(strb)]));
   }
 }
 
@@ -204,13 +201,13 @@ int dist_dam_lev(const char *stra, const char *strb, const struct Completion *co
   ca_idx[0] = 0;
   for (i = 1; i < lena; i++)
   {
-    ca_idx[i] = ca_idx[i-1] + MBCHARLEN(&stra[ca_idx[i-1]]);
+    ca_idx[i] = ca_idx[i - 1] + MBCHARLEN(&stra[ca_idx[i - 1]]);
   }
 
   cb_idx[0] = 0;
   for (j = 1; j < lenb; j++)
   {
-    cb_idx[j] = cb_idx[j-1] + MBCHARLEN(&strb[cb_idx[j-1]]);
+    cb_idx[j] = cb_idx[j - 1] + MBCHARLEN(&strb[cb_idx[j - 1]]);
   }
 
   // initialise calculation matrix
@@ -230,23 +227,22 @@ int dist_dam_lev(const char *stra, const char *strb, const struct Completion *co
 
   // calculate the character distance
   i = 1;
-  while (i < lena) {
+  while (i < lena)
+  {
     j = 1;
-    while (j < lenb) {
+    while (j < lenb)
+    {
       cost = mb_equal(&stra[ca_idx[i]], &strb[cb_idx[j]]) ? 0 : 1;
 
-      d[i][j] = min(
-          d[i-1][j] + 1,       // deletion
-          d[i][j-1] + 1,       // insertion
-          d[i-1][j-1] + cost); // substitution
+      d[i][j] = min(d[i - 1][j] + 1,         // deletion
+                    d[i][j - 1] + 1,         // insertion
+                    d[i - 1][j - 1] + cost); // substitution
 
       // transposition if symbols next to each other are equal
-      if (i > 1 &&
-          j > 1 &&
-          mb_equal(&stra[ca_idx[i]], &strb[cb_idx[j-1]]) &&
-          mb_equal(&stra[ca_idx[i-1]], &strb[cb_idx[j]]))
+      if (i > 1 && j > 1 && mb_equal(&stra[ca_idx[i]], &strb[cb_idx[j - 1]]) &&
+          mb_equal(&stra[ca_idx[i - 1]], &strb[cb_idx[j]]))
       {
-        d[i][j] = (d[i][j] < d[i-2][j-2] + 1) ? d[i][j] : d[i-2][j-2] + 1;
+        d[i][j] = (d[i][j] < d[i - 2][j - 2] + 1) ? d[i][j] : d[i - 2][j - 2] + 1;
       }
 
       j += 1;
