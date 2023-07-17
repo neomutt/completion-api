@@ -41,7 +41,21 @@ void test_simple_regex(void)
   compl_compile_regex(comp);
   TEST_CHECK(match_dist("abrakadapple\nerror", comp) == -1);
 
-  // TODO add tests for case insensitive matching
+  comp->flags = MUTT_MATCH_IGNORECASE;
+  comp->typed_str = ".*pple";
+  compl_compile_regex(comp);
+  TEST_CHECK(match_dist("abrakadAPPLE", comp) == 6);
+  TEST_CHECK(match_dist("unAPPLE", comp) == 1);
+
+  comp->typed_str = ".*PPLE";
+  compl_compile_regex(comp);
+  TEST_CHECK(match_dist("abrakadapple", comp) == 6);
+  TEST_CHECK(match_dist("unapple", comp) == 1);
+
+  comp->typed_str = ".*PplE";
+  compl_compile_regex(comp);
+  TEST_CHECK(match_dist("abrakadApPLe", comp) == 6);
+  TEST_CHECK(match_dist("unapPLe", comp) == 1);
 }
 
 TEST_LIST = {
