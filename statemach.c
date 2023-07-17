@@ -163,6 +163,27 @@ int compl_type(Completion *comp, const char *str, size_t buf_len)
   return 1;
 }
 
+static int compl_sort_fn(const void *a, const void *b) {
+  const CompletionItem *itema = (const CompletionItem *)a;
+  const CompletionItem *itemb = (const CompletionItem *)b;
+
+  // non-matches go to the back of the list (and are sorted alphabetically)
+  if (itema->is_match && !itemb->is_match)
+    return -1;
+  else if (!itema->is_match && itemb->is_match)
+    return 1;
+  else if (!itema->is_match && !itemb->is_match)
+    return strcoll(itema->str, itemb->str);
+
+  // matches are sorted by match distance
+  int dist_diff = itema->match_dist - itemb->match_dist;
+  if (dist_diff != 0)
+    return dist_diff;
+
+  // matches with equal match distance are sorted alphabetically
+  return strcoll(itema->str, itemb->str);
+}
+
 bool compl_state_init(Completion *comp, char **result, size_t *match_len)
 {
   logdeb(5, "Initialising completion...");
@@ -177,15 +198,12 @@ bool compl_state_init(Completion *comp, char **result, size_t *match_len)
       logdeb(5, "'%s' matched: '%s'", comp->typed_str, item->str);
       item->is_match = true;
 
-      // first found item gets assigned to match
-      if (n_matches == 0)
-        comp->cur_item = item;
-
       n_matches++;
     }
   }
 
-  // TODO here we should sort the items by their match distance
+  ARRAY_SORT(comp->items, compl_sort_fn);
+
 
   if (n_matches == 0)
   {
@@ -196,6 +214,9 @@ bool compl_state_init(Completion *comp, char **result, size_t *match_len)
   }
   else if (n_matches >= 1)
   {
+    // first found item gets assigned to match
+    comp->cur_item = ARRAY_GET(comp->items, 0);
+
     if (n_matches > 1)
       comp->state = MUTT_COMPL_MULTI;
     else
@@ -290,7 +311,7 @@ char *compl_complete(Completion *comp)
     case MUTT_COMPL_MULTI: // use next match
       compl_state_multi(comp, &result, &match_len);
       break;
-    case MUTT_COMPL_NEW: // TODO no items added yet, do nothing?
+    case MUTT_COMPL_NEW:
     default:
       return NULL;
   }
