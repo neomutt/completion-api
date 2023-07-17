@@ -1,31 +1,46 @@
+#include <stdlib.h>
 #include "config.h"
 #include "acutest.h"
-#include "matching.h"
-#include "mutt/mbyte.h"
 #include <locale.h>
-
-#define ARRAY_SIZE(arr) (sizeof((arr)) / sizeof((arr)[0]))
-
+#include "mutt/mbyte.h"
+#include "completion.h"
+#include "statemach.h"
 
 void test_simple_regex(void)
 {
+  Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  comp->flags = MUTT_MATCH_REGEX;
+
   // TODO what about locale unset cases?
-  TEST_CHECK(dist_regex(".+pple", "apple") == 0);
-  TEST_CHECK(dist_regex(".+pple", "aapple") == 0);
-  TEST_CHECK(dist_regex(".*pple", "abrakadapple") == 0);
-  TEST_CHECK(dist_regex(".*pple", "unapple") == 0);
+  comp->typed_str = ".+pple";
+  compl_compile_regex(comp);
+  TEST_CHECK(match_dist("apple", comp) == 1);
+  TEST_CHECK(match_dist("aapple", comp) == 0);
+
+  comp->typed_str = ".*pple";
+  compl_compile_regex(comp);
+  TEST_CHECK(match_dist("abrakadapple", comp) == 6);
+  TEST_CHECK(match_dist("unapple", comp) == 1);
 
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
 
-  TEST_CHECK(dist_regex(".+pple", "äpple") == 0);
-  TEST_CHECK(dist_regex(".+pple", "ääaapple") == 0);
+  comp->typed_str = ".+pple";
+  compl_compile_regex(comp);
+  TEST_CHECK(match_dist("äpple", comp) == 0);
+  TEST_CHECK(match_dist("ääaapple", comp) == 4);
 
-  TEST_CHECK(dist_regex(".*pple.*$", "\nabrakadapple\n") == 0);
+  comp->typed_str = ".*pple.*$";
+  compl_compile_regex(comp);
+  TEST_CHECK(match_dist("\nabrakadapple\n", comp) == 5);
 
   // with ^ and $ these should not match
-  TEST_CHECK(dist_regex("^.*pple$", "abrakadapple\nerror") == -1);
-  TEST_CHECK(dist_regex("abra^.*pple$", "abrakadapple\nerror") == -1);
+  comp->typed_str = "^.*pple$";
+  compl_compile_regex(comp);
+  TEST_CHECK(match_dist("abrakadapple\nerror", comp) == -1);
+  comp->typed_str = "abra^.*pple$";
+  compl_compile_regex(comp);
+  TEST_CHECK(match_dist("abrakadapple\nerror", comp) == -1);
 }
 
 TEST_LIST = {
