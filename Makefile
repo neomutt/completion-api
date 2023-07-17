@@ -23,7 +23,7 @@ LDFLAGS	+= -fprofile-arcs -ftest-coverage
 OUT	= test_exact test_statemach test_matching test_regex test_fuzzy
 
 SRC_STATE	= test_statemach.c statemach.c fuzzy.c
-SRC_MATCH 	= test_matching.c fuzzy.c
+SRC_MATCH 	= test_matching.c statemach.c fuzzy.c
 SRC_FUZZY 	= test_fuzzy.c fuzzy.c statemach.c
 SRC_REGEX 	= test_regex.c fuzzy.c
 SRC_EXACT	= test_exact.c statemach.c fuzzy.c
@@ -32,14 +32,11 @@ OBJ_MATCH	= $(SRC_MATCH:%.c=%.o)
 OBJ_FUZZY	= $(SRC_FUZZY:%.c=%.o)
 OBJ_REGEX	= $(SRC_REGEX:%.c=%.o)
 OBJ_EXACT	= $(SRC_EXACT:%.c=%.o)
-OBJ_STATE	= $(SRC_STATE:%.c=%.o) $(OBJ_FUZZY)
+OBJ_STATE	= $(SRC_STATE:%.c=%.o)
 
 all: $(OUT)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-matching.o: matching.c fuzzy.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 test_statemach: $(OBJ_STATE)
