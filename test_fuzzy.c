@@ -88,34 +88,48 @@ void test_damerau_levenshtein(void)
   Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
 
   // null pointers checks
-  TEST_CHECK(dist_dam_lev(NULL, "123", comp) == 3);
-  TEST_CHECK(dist_dam_lev("123", NULL, comp) == 3);
-  TEST_CHECK(dist_dam_lev(NULL, NULL, comp) == 0);
-  TEST_CHECK(dist_dam_lev("", "", comp) == 0);
-  TEST_CHECK(dist_dam_lev("123", "", comp) == 3);
-  TEST_CHECK(dist_dam_lev("", "123", comp) == 3);
+  comp->typed_str = NULL;
+  TEST_CHECK(dist_dam_lev("123", comp) == 3);
+  TEST_CHECK(dist_dam_lev(NULL, comp) == 0);
+  comp->typed_str = "123";
+  TEST_CHECK(dist_dam_lev(NULL, comp) == 3);
+  TEST_CHECK(dist_dam_lev("", comp) == 3);
+  comp->typed_str = "";
+  TEST_CHECK(dist_dam_lev("", comp) == 0);
+  TEST_CHECK(dist_dam_lev("123", comp) == 3);
 
   // bad mbytes should always fail
   char *mbyte = "ä";
-  TEST_CHECK(dist_dam_lev(&mbyte[1], "abc", comp) == -1);
-  TEST_CHECK(dist_dam_lev(mbyte, &mbyte[1], comp) == -1);
-  TEST_CHECK(dist_dam_lev(&mbyte[1], &mbyte[1], comp) == -1);
+  comp->typed_str = &mbyte[1];
+  TEST_CHECK(dist_dam_lev("abc", comp) == -1);
+  TEST_CHECK(dist_dam_lev(&mbyte[1], comp) == -1);
+  comp->typed_str = mbyte;
+  TEST_CHECK(dist_dam_lev(&mbyte[1], comp) == -1);
 
   // some made-up tests
-  TEST_CHECK(dist_dam_lev("chitin", "chtia", comp) == 2);
-  TEST_CHECK(dist_dam_lev("hello", "hell", comp) == 1);
-  TEST_CHECK(dist_dam_lev("pete", "ptee", comp) == 1);
-  TEST_CHECK(dist_dam_lev("peter", "pteer", comp) == 1);
-  TEST_CHECK(dist_dam_lev("pete", "pteer", comp) == 2);
-  TEST_CHECK(dist_dam_lev("email", "mail", comp) == 1);
+  comp->typed_str = "chitin";
+  TEST_CHECK(dist_dam_lev("chtia", comp) == 2);
+  comp->typed_str = "hello";
+  TEST_CHECK(dist_dam_lev("hell", comp) == 1);
+  comp->typed_str = "peter";
+  TEST_CHECK(dist_dam_lev("pteer", comp) == 1);
+  comp->typed_str = "pete";
+  TEST_CHECK(dist_dam_lev("ptee", comp) == 1);
+  TEST_CHECK(dist_dam_lev("pteer", comp) == 2);
+  comp->typed_str = "email";
+  TEST_CHECK(dist_dam_lev("mail", comp) == 1);
 
   // one insertion, one transposition
-  TEST_CHECK(dist_dam_lev("fltcap", "flatcpa", comp) == 2);
+  comp->typed_str = "fltcap";
+  TEST_CHECK(dist_dam_lev("flatcpa", comp) == 2);
 
   // mbyte transposition
-  TEST_CHECK(dist_dam_lev("päfel", "äpfel", comp) == 1);
-  TEST_CHECK(dist_dam_lev("xpäfel", "xäpfel", comp) == 1);
-  TEST_CHECK(dist_dam_lev("te", "et", comp) == 1);
+  comp->typed_str = "päfel";
+  TEST_CHECK(dist_dam_lev("äpfel", comp) == 1);
+  comp->typed_str = "xpäfel";
+  TEST_CHECK(dist_dam_lev("xäpfel", comp) == 1);
+  comp->typed_str = "te";
+  TEST_CHECK(dist_dam_lev("et", comp) == 1);
 
   // mbyte substitution
   TEST_CHECK(dist_lev("Äpfel", "Apfel") == 1);
