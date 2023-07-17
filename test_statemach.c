@@ -2,12 +2,55 @@
 #include "acutest.h"
 #include "statemach.h"
 #include "completion.h"
+#include "mutt/array.h"
 
 #define STR_EQ(s1, s2) strcmp(s1, s2) == 0
 #define STR_DF(s1, s2) strcmp(s1, s2) != 0
 
 void state_init(void)
 {
+}
+
+void state_init_from_array(void)
+{
+  // we need to set the locale settings, otherwise UTF8 chars won't work as expected
+  setlocale(LC_ALL, "en_US.UTF-8");
+  printf("\n");
+
+  struct StringList list = ARRAY_HEAD_INITIALIZER;
+  /* char *a = mutt_mem_calloc(6, sizeof(char)); */
+  /* a = "apfel\0"; */
+  ARRAY_ADD(&list, "apfel");                                                  \
+  ARRAY_ADD(&list, "apple");
+  ARRAY_ADD(&list, "apply");
+  ARRAY_ADD(&list, "arange");
+
+  Completion *comp = compl_from_array(&list, COMPL_MODE_EXACT);
+  compl_type(comp, "ap", 3);
+
+  char *result = NULL;
+  printf("First tab...\n");
+  result = compl_complete(comp);
+  printf("  ap -> %s\n", result);
+  TEST_CHECK(STR_EQ(result, "apfel"));
+
+  printf("Second tab...\n");
+  result = compl_complete(comp);
+  printf("  ap -> %s\n", result);
+  TEST_CHECK(STR_EQ(result, "apple"));
+
+  printf("Third tab...\n");
+  result = compl_complete(comp);
+  printf("  ap -> %s\n", result);
+  TEST_CHECK(STR_EQ(result, "apply"));
+
+  printf("Third tab to reset...\n");
+  result = compl_complete(comp);
+  printf("  ap -> %s\n", result);
+  TEST_CHECK(STR_EQ(result, "ap"));
+
+  ARRAY_FREE(&list);
+  compl_free(comp);
 }
 
 void malformed_input(void)
@@ -198,6 +241,7 @@ void duplicate_add(void)
 
 TEST_LIST = {
   { "statemachine initialisation", state_init },
+  { "statemachine initialisation from array", state_init_from_array },
   { "statemachine malformed input", malformed_input },
   { "statemachine empty list", state_empty },
   { "statemachine no match", state_nomatch },
