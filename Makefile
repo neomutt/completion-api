@@ -25,7 +25,7 @@ OUT	= test_exact test_statemach test_matching test_regex test_fuzzy
 SRC_STATE	= test_statemach.c statemach.c fuzzy.c
 SRC_MATCH 	= test_matching.c statemach.c fuzzy.c
 SRC_FUZZY 	= test_fuzzy.c fuzzy.c statemach.c
-SRC_REGEX 	= test_regex.c fuzzy.c
+SRC_REGEX 	= test_regex.c fuzzy.c statemach.c
 SRC_EXACT	= test_exact.c statemach.c fuzzy.c
 
 OBJ_MATCH	= $(SRC_MATCH:%.c=%.o)
@@ -54,11 +54,12 @@ test_fuzzy: $(OBJ_FUZZY)
 test_regex: $(OBJ_REGEX)
 	$(CC) -o $@ $(OBJ_REGEX) $(LDFLAGS)
 
-test:	test_statemach test_exact test_matching test_fuzzy
+test:	test_statemach test_exact test_matching test_fuzzy test_regex
 	./test_statemach
 	./test_exact
 	./test_matching
 	./test_fuzzy
+	./test_regex
 
 clean:
 	$(RM) $(OBJ_SHARED) $(OBJ_STATE) $(OBJ_EXACT) $(OBJ_MATCH) $(OBJ_FUZZY) $(OBJ_REGEX) $(OUT)
