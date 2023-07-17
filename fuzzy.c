@@ -166,32 +166,33 @@ int dist_lev(const char *stra, const char *strb)
  * The damerau-levenshtein distance is computed with dynamic programming
  * (matrix computation), and thus quicker than the recursive levenshtein distance.
  *
- * @param stra string a
- * @param strb string b
+ * @param tar target string
+ * @param comp Completion
  * @retval int damerau-levenshtein distance between strings
  */
-int dist_dam_lev(const char *stra, const char *strb, const struct Completion *comp)
+int dist_dam_lev(const char *tar, const struct Completion *comp)
 {
-  int lena = mbs_char_count(stra);
-  int lenb = mbs_char_count(strb);
+  const char *src = comp->typed_str;
+  int len_src = mbs_char_count(src);
+  int len_tar = mbs_char_count(tar);
 
   // TODO maybe move these string sanity checks to function?
-  if (lena == -1 || lenb == -1)
+  if (len_src == -1 || len_tar == -1)
   {
     return -1;
   }
-  else if (lena == 0)
+  else if (len_src == 0)
   {
-    return lenb;
+    return len_tar;
   }
-  else if (lenb == 0)
+  else if (len_tar == 0)
   {
-    return lena;
+    return len_src;
   }
 
-  int d[lena][lenb];
-  int ca_idx[lena];
-  int cb_idx[lenb];
+  int d[len_src][len_tar];
+  int ca_idx[len_src];
+  int cb_idx[len_tar];
 
   int i = 0;
   int j = 0;
@@ -199,48 +200,48 @@ int dist_dam_lev(const char *stra, const char *strb, const struct Completion *co
 
   // initialise the list of symbol indices (supporting mbyte)
   ca_idx[0] = 0;
-  for (i = 1; i < lena; i++)
+  for (i = 1; i < len_src; i++)
   {
-    ca_idx[i] = ca_idx[i - 1] + MBCHARLEN(&stra[ca_idx[i - 1]]);
+    ca_idx[i] = ca_idx[i - 1] + MBCHARLEN(&src[ca_idx[i - 1]]);
   }
 
   cb_idx[0] = 0;
-  for (j = 1; j < lenb; j++)
+  for (j = 1; j < len_tar; j++)
   {
-    cb_idx[j] = cb_idx[j - 1] + MBCHARLEN(&strb[cb_idx[j - 1]]);
+    cb_idx[j] = cb_idx[j - 1] + MBCHARLEN(&tar[cb_idx[j - 1]]);
   }
 
   // initialise calculation matrix
-  for (i = 0; i < lena; i++)
+  for (i = 0; i < len_src; i++)
   {
-    for (j = 0; j < lenb; j++)
+    for (j = 0; j < len_tar; j++)
     {
       d[i][j] = 0;
     }
     d[i][0] = i;
   }
 
-  for (j = 0; j < lenb; j++)
+  for (j = 0; j < len_tar; j++)
   {
     d[0][j] = j;
   }
 
   // calculate the character distance
   i = 1;
-  while (i < lena)
+  while (i < len_src)
   {
     j = 1;
-    while (j < lenb)
+    while (j < len_tar)
     {
-      cost = mb_equal(&stra[ca_idx[i]], &strb[cb_idx[j]]) ? 0 : 1;
+      cost = mb_equal(&src[ca_idx[i]], &tar[cb_idx[j]]) ? 0 : 1;
 
       d[i][j] = min(d[i - 1][j] + 1,         // deletion
                     d[i][j - 1] + 1,         // insertion
                     d[i - 1][j - 1] + cost); // substitution
 
       // transposition if symbols next to each other are equal
-      if (i > 1 && j > 1 && mb_equal(&stra[ca_idx[i]], &strb[cb_idx[j - 1]]) &&
-          mb_equal(&stra[ca_idx[i - 1]], &strb[cb_idx[j]]))
+      if (i > 1 && j > 1 && mb_equal(&src[ca_idx[i]], &tar[cb_idx[j - 1]]) &&
+          mb_equal(&src[ca_idx[i - 1]], &tar[cb_idx[j]]))
       {
         d[i][j] = (d[i][j] < d[i - 2][j - 2] + 1) ? d[i][j] : d[i - 2][j - 2] + 1;
       }
@@ -250,5 +251,5 @@ int dist_dam_lev(const char *stra, const char *strb, const struct Completion *co
     i += 1;
   }
 
-  return d[lena - 1][lenb - 1];
+  return d[len_src - 1][len_tar - 1];
 }

@@ -15,4 +15,4 @@ bool mb_equal(const char *stra, const char *strb);
 
 // TODO add fuzzy match function (could be reused for fuzzy finding in pager etc)
 int dist_lev(const char *stra, const char *strb);
-int dist_dam_lev(const char *stra, const char *strb, const Completion *comp);
+int dist_dam_lev(const char *tar, const Completion *comp);

@@ -62,6 +62,8 @@
 Completion *compl_new(MuttCompletionFlags flags);
 void compl_free(Completion *comp);
 
+int compl_compile_regex(Completion *comp);
+
 // TODO add an initialiser which takes a const ARRAY of strings with arbitrary size
 // TODO handle strings with dynamic size (keep track of longest string)
 int compl_add(Completion *comp, const char *str, const size_t buf_len);
@@ -83,5 +85,5 @@ int compl_get_size(Completion *comp);
 bool compl_check_duplicate(const Completion *comp, const char *str, const size_t buf_len);
 
 // the main matching function
-int match_dist(const char *src, const char *tar, const Completion *comp);
+int match_dist(const char *tar, const Completion *comp);
 #endif

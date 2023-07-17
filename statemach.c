@@ -93,6 +93,35 @@ int compl_add(Completion *comp, const char *str, size_t buf_len)
   return 1;
 }
 
+int compl_compile_regex(Completion *comp) {
+    int errcode = regcomp(comp->regex, comp->typed_str, REG_EXTENDED | REG_NEWLINE);
+
+    // successful compilation
+    if (errcode == 0)
+    {
+      comp->regex_compiled = true;
+      return 1;
+    }
+
+    // try a error message size of 20 first
+    char *errmsg = calloc(20, sizeof(char));
+    int errsize = regerror(errcode, comp->regex, errmsg, 20);
+
+    // potential reallocation to fit the whole error message
+    if (errsize >= 20)
+    {
+      free(errmsg);
+      char *errmsg = calloc(errsize, sizeof(char));
+      regerror(errcode, comp->regex, errmsg, errsize);
+    }
+
+    logerr("RegexCompilation: Error when compiling string. %s", errmsg);
+
+    free(errmsg);
+    comp->regex_compiled = false;
+    return 0;
+}
+
 int compl_type(Completion *comp, const char *str, size_t buf_len)
 {
   if (!compl_health_check(comp))
@@ -121,7 +150,7 @@ bool compl_state_init(Completion *comp, char **result, size_t *match_len)
 
   ARRAY_FOREACH(item, comp->items)
   {
-    item->match_dist = match_dist(comp->typed_str, item->str, comp);
+    item->match_dist = match_dist(item->str, comp);
     if (item->match_dist >= 0)
     {
       logdeb(5, "'%s' matched: '%s'", comp->typed_str, item->str);
@@ -212,34 +241,12 @@ char *compl_complete(Completion *comp)
   // recompile out-of-date regex
   if ((comp->flags & MUTT_MATCH_REGEX) && !comp->regex_compiled)
   {
-    // TODO move error handling to own function?
-    int errcode = regcomp(comp->regex, comp->typed_str, REG_EXTENDED);
-    if (errcode != 0)
+    if (compl_compile_regex(comp) != 0)
     {
-      // try a error message size of 20 first
-      char *errmsg = calloc(20, sizeof(char));
-      int errsize = regerror(errcode, comp->regex, errmsg, 20);
-
-      // potential reallocation to fit the whole error message
-      if (errsize >= 20)
-      {
-        free(errmsg);
-        char *errmsg = calloc(errsize, sizeof(char));
-        regerror(errcode, comp->regex, errmsg, errsize);
-      }
-
-      logerr("RegexCompilation: Error when compiling string. %s", errmsg);
-
-      free(errmsg);
-
+      return NULL;
       // TODO how do we handle a failed regex compilation
-      // fall back to fuzzy matching instead
-      comp->flags = comp->flags & MUTT_MATCH_FUZZY;
-      comp->regex_compiled = false;
-    }
-    else
-    {
-      comp->regex_compiled = true;
+      // fall back to fuzzy matching instead?
+      // comp->flags = comp->flags & MUTT_MATCH_FUZZY;
     }
   }
 
@@ -267,11 +274,12 @@ char *compl_complete(Completion *comp)
       return NULL;
   }
 
+  return result;
   // convert result back to multibyte
-  char *match = mutt_mem_calloc(match_len + 1, sizeof(char));
-  strncpy(match, result, match_len + 1);
-  logdeb(4, "Match is '%s' (buf:%lu)\n", match, mutt_str_len(match));
-  return match;
+  /* char *match = mutt_mem_calloc(match_len + 1, sizeof(char)); */
+  /* strncpy(match, result, match_len + 1); */
+  /* logdeb(4, "Match is '%s' (buf:%lu)\n", match, mutt_str_len(match)); */
+  /* return match; */
 }
 
 int compl_health_check(const Completion *comp)
@@ -357,32 +365,44 @@ bool compl_check_duplicate(const Completion *comp, const char *str, size_t buf_l
  * dist_regex calculates the string distance between the source- and target-string,
  * by utilising the compiled regular expression
  *
- * @param src source string
  * @param tar target string
  * @param regex compiled regular expression
  * @retval int distance between the strings (or -1 if no match at all)
  */
-static int dist_regex(const char *src, const char *tar, const Completion *comp)
+static int dist_regex(const char *tar, const Completion *comp)
 {
   int dist = -1;
   regmatch_t pmatch[1];
 
-  // check for a match
-  if (regexec(comp->regex, tar, 1, pmatch, REG_NOTEOL & REG_NOTBOL) == REG_NOMATCH)
+  if (!comp->regex_compiled)
   {
+    logerr("DistRegex: Regex needs to be compiled first!");
     return -1;
   }
 
-  size_t src_len = mutt_str_len(src);
+  /* int regex_flags = REG_EXTENDED | REG_NOTEOL | REG_NOTBOL; */
+  int regex_flags = REG_EXTENDED;
+
+  if (comp->flags & MUTT_MATCH_IGNORECASE)
+    regex_flags = regex_flags | REG_ICASE;
+
+  // check for a match
+  if (regexec(comp->regex, tar, 1, pmatch, regex_flags) == REG_NOMATCH)
+  {
+    logdeb(4, "DistRegex: No match found.");
+    return -1;
+  }
+
+  size_t src_len = mutt_str_len(comp->typed_str);
   size_t tar_len = mutt_str_len(tar);
 
   // match distance is the number of additions needed to match the string
   // TODO this is a naive implementation, what about complex regexes like "[abcdefghijk]+" = "a"
-  if (src_len > tar_len)
+  if (src_len <= tar_len)
     dist = tar_len - src_len;
 
-  if (src_len <= tar_len)
-    dist = 0;
+  if (src_len > tar_len)
+    dist = src_len - tar_len;
 
   return dist;
 }
@@ -396,8 +416,9 @@ static int dist_regex(const char *src, const char *tar, const Completion *comp)
  * @param tar target string
  * @param flags completion flags
  */
-static int dist_exact(const char *src, const char *tar, const Completion *comp)
+static int dist_exact(const char *tar, const Completion *comp)
 {
+  char *src = comp->typed_str;
   bool src_mbs = is_mbs(src);
   bool tar_mbs = is_mbs(tar);
 
@@ -453,26 +474,28 @@ static int dist_exact(const char *src, const char *tar, const Completion *comp)
 }
 
 /**
- * match_dist calculates the string distance between source- and target-string,
+ * match_dist calculates the string distance between the typed and target-string,
  * based on the match method (MuttMatchFlags)
  *
- * @param stra source string
+ * When using MUTT_MATCH_REGEX, the regular expression needs to be compiled
+ * first (compl_compile_regex).
+ *
  * @param strb target string
  * @retval int distance between the strings (or -1 if no match at all)
  */
-int match_dist(const char *src, const char *tar, const Completion *comp)
+int match_dist(const char *tar, const Completion *comp)
 {
   int dist = -1;
 
   switch (comp->flags)
   {
     case MUTT_MATCH_FUZZY:
-      return dist_dam_lev(src, tar, comp);
+      return dist_dam_lev(tar, comp);
     case MUTT_MATCH_REGEX:
-      return dist_regex(src, tar, comp);
+      return dist_regex(tar, comp);
     case MUTT_MATCH_EXACT:
     default:
-      return dist_exact(src, tar, comp);
+      return dist_exact(tar, comp);
   }
 
   return dist;
