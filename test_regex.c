@@ -41,6 +41,8 @@ void test_simple_regex(void)
   comp->typed_str = "abra^.*pple$";
   compl_compile_regex(comp);
   TEST_CHECK(match_dist("abrakadapple\nerror", comp) == -1);
+
+  // TODO add tests for case insensitive matching
 }
 
 TEST_LIST = {
