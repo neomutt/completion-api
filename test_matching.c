@@ -4,25 +4,25 @@
 
 void test_match_simple()
 {
-  char *a = "apples";
-  char *tar = "applers";
   Completion *comp = compl_new(MUTT_COMPL_NO_FLAGS);
+  comp->typed_str = "apples";
+  char *tar = "applers";
 
   comp->flags = MUTT_MATCH_EXACT;
-  TEST_CHECK(match_dist(a, tar, comp) == -1);
+  TEST_CHECK(match_dist(tar, comp) == -1);
   comp->flags = MUTT_MATCH_FUZZY;
-  TEST_CHECK(match_dist(a, tar, comp) == 1);
+  TEST_CHECK(match_dist(tar, comp) == 1);
 
-  a = "derived";
+  comp->typed_str = "derived";
   tar = "drvd";
 
   comp->flags = MUTT_MATCH_EXACT;
-  TEST_CHECK(match_dist(a, tar, comp) == -1);
+  TEST_CHECK(match_dist(tar, comp) == -1);
   comp->flags = MUTT_MATCH_FUZZY;
-  TEST_CHECK(match_dist(a, tar, comp) == 3);
-  a = "drvd";
+  TEST_CHECK(match_dist(tar, comp) == 3);
+  comp->typed_str = "drvd";
   comp->flags = MUTT_MATCH_EXACT;
-  TEST_CHECK(match_dist(a, tar, comp) == 0);
+  TEST_CHECK(match_dist(tar, comp) == 0);
 }
 
 TEST_LIST = {
