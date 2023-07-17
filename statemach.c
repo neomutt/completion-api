@@ -117,13 +117,12 @@ bool compl_state_init(Completion *comp, char **result, size_t *match_len)
 {
   logdeb(5, "Initialising completion...");
   int n_matches = 0;
-  int dist = -1;
   CompletionItem *item = NULL;
 
   ARRAY_FOREACH(item, comp->items)
   {
     item->match_dist = match_dist(comp->typed_str, item->str, comp);
-    if (dist >= 0)
+    if (item->match_dist >= 0)
     {
       logdeb(5, "'%s' matched: '%s'", comp->typed_str, item->str);
       item->is_match = true;
@@ -463,20 +462,17 @@ static int dist_exact(const char *src, const char *tar, const Completion *comp)
  */
 int match_dist(const char *src, const char *tar, const Completion *comp)
 {
-  int dist = 0;
+  int dist = -1;
 
   switch (comp->flags)
   {
     case MUTT_MATCH_FUZZY:
-      dist = dist_dam_lev(src, tar, comp);
-      break;
+      return dist_dam_lev(src, tar, comp);
     case MUTT_MATCH_REGEX:
-      dist = dist_regex(src, tar, comp);
-      break;
+      return dist_regex(src, tar, comp);
     case MUTT_MATCH_EXACT:
     default:
-      dist = dist_exact(src, tar, comp);
-      break;
+      return dist_exact(src, tar, comp);
   }
 
   return dist;
