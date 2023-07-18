@@ -184,7 +184,7 @@ static int compl_sort_fn(const void *a, const void *b) {
   return mutt_str_coll(itema->str, itemb->str);
 }
 
-bool compl_state_init(Completion *comp, char **result, size_t *match_len)
+void compl_state_init(Completion *comp)
 {
   logdeb(5, "Initialising completion...");
   int n_matches = 0;
@@ -204,69 +204,50 @@ bool compl_state_init(Completion *comp, char **result, size_t *match_len)
 
   ARRAY_SORT(comp->items, compl_sort_fn);
 
-
   if (n_matches == 0)
   {
     comp->state = MUTT_COMPL_NOMATCH;
     comp->cur_item = NULL;
     logdeb(4, "No match for '%s'.", comp->typed_str);
-    return false;
   }
   else if (n_matches >= 1)
   {
-    // first found item gets assigned to match
-    comp->cur_item = ARRAY_GET(comp->items, 0);
-
     if (n_matches > 1)
       comp->state = MUTT_COMPL_MULTI;
     else
-      comp->state = MUTT_COMPL_MATCH;
-  }
-  else
-  {
-    // TODO this should never happen unless we overflow the int, what shall we do here?
-    return false;
-  }
+      comp->state = MUTT_COMPL_SINGLE;
 
-  *match_len = mutt_str_len(comp->cur_item->str);
-  *result = comp->cur_item->str;
-  return true;
+    // first found item gets assigned to match
+    comp->cur_item = ARRAY_GET(comp->items, 0);
+  }
 }
 
-bool compl_state_match(Completion *comp, char **result, size_t *match_len)
+void compl_state_single(Completion *comp)
 {
-  comp->state = MUTT_COMPL_INIT;
-  comp->cur_item = NULL;
-
-  *result = comp->typed_str;
-  *match_len = mutt_str_len(comp->typed_str);
-  return true;
+  // switch between match item and typed string
+  if (comp->cur_item == ARRAY_GET(comp->items, 0))
+    comp->cur_item = NULL;
+  else
+    comp->cur_item = ARRAY_GET(comp->items, 0);
 }
 
-void compl_state_multi(Completion *comp, char **result, size_t *match_len)
+void compl_state_multi(Completion *comp)
 {
   CompletionItem *item = NULL;
 
   // TODO is ARRAY_FOREACH_FROM overflow safe? It seems to work for now, but maybe check twice!
   ARRAY_FOREACH_FROM(item, comp->items, ARRAY_IDX(comp->items, comp->cur_item) + 1)
   {
-    if (item->is_match)
+    // assign next match
+    if (item->is_match || (comp->flags & MUTT_MATCH_SHOWALL))
     {
       comp->cur_item = item;
-      *result = comp->cur_item->str;
-      *match_len = mutt_str_len(comp->cur_item->str);
-      break;
+      return;
     }
   }
 
   // when we reach the end, step back to the typed string
-  if (*result == NULL)
-  {
-    comp->state = MUTT_COMPL_INIT;
-    comp->cur_item = NULL;
-    *result = comp->typed_str;
-    *match_len = mutt_str_len(comp->typed_str);
-  }
+  comp->cur_item = NULL;
 }
 
 char *compl_complete(Completion *comp)
@@ -292,34 +273,45 @@ char *compl_complete(Completion *comp)
     }
   }
 
-  char *result = NULL;
-  // TODO refactor match_len and ..._mb_len to be buffer sizes
-  size_t match_len = 0;
-
   switch (comp->state)
   {
     case MUTT_COMPL_INIT:
-      if (!compl_state_init(comp, &result, &match_len))
-        return comp->typed_str;
+      compl_state_init(comp);
       break;
 
-    case MUTT_COMPL_MATCH: // return to typed string after matching single item
-      if (!compl_state_match(comp, &result, &match_len))
-        return comp->typed_str;
+    case MUTT_COMPL_NOMATCH:
+      comp->cur_item = NULL;
+      break;
+
+    case MUTT_COMPL_SINGLE: // return to typed string after matching single item
+      compl_state_single(comp);
       break;
 
     case MUTT_COMPL_MULTI: // use next match
-      compl_state_multi(comp, &result, &match_len);
+      // matching only first hit -> return to the initial match
+      if (comp->flags & MUTT_MATCH_FIRSTMATCH)
+        compl_state_single(comp);
+      else
+        compl_state_multi(comp);
       break;
     case MUTT_COMPL_NEW:
     default:
-      return comp->typed_str;
+      comp->cur_item = NULL;
   }
 
-  // convert result into new pointer for user
-  char *match = mutt_mem_calloc(match_len + 1, sizeof(char));
-  strncpy(match, result, match_len + 1);
-  logdeb(4, "Match is '%s' (buf:%lu)\n", match, mutt_str_len(match));
+  char *result = NULL;
+  if (comp->cur_item == NULL)
+    result = comp->typed_str;
+  else
+    result = comp->cur_item->str;
+
+  // TODO shall we use an existing pointer argument instead?
+
+  // allocate new pointer for result
+  size_t result_len = mutt_str_len(result) + 1;
+  char *match = mutt_mem_calloc(result_len, sizeof(char));
+  strncpy(match, result, result_len);
+  logdeb(4, "Match is '%s' (buf:%lu)\n", match, result_len);
   return match;
 }
 

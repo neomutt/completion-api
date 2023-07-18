@@ -9,8 +9,8 @@ typedef uint8_t MuttCompletionState;
 
 #define MUTT_COMPL_NEW        0        /// < Initial state
 #define MUTT_COMPL_INIT      (1 << 0)  /// < Initial state
-#define MUTT_COMPL_MULTI     (1 << 1)  /// < Multiple matches with common stem
-#define MUTT_COMPL_MATCH     (1 << 2)  /// < Match found
+#define MUTT_COMPL_SINGLE    (1 << 1)  /// < Match found
+#define MUTT_COMPL_MULTI     (1 << 2)  /// < Multiple matches with common stem
 #define MUTT_COMPL_NOMATCH   (1 << 3)  /// < No Match found
 #endif
 
@@ -27,6 +27,7 @@ typedef uint8_t MuttMatchFlags;
 #define MUTT_MATCH_NOFLAGS           0
 #define MUTT_MATCH_IGNORECASE  (1 << 1) /// ignore case when matching
 #define MUTT_MATCH_FIRSTMATCH  (1 << 2) /// < Return only the first match
+#define MUTT_MATCH_SHOWALL     (1 << 3) /// < Return non-matches after all matches
 #endif
 
 #ifndef MUTT_MATCHING

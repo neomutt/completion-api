@@ -69,12 +69,13 @@ int compl_compile_regex(Completion *comp);
 int compl_add(Completion *comp, const char *str, const size_t buf_len);
 int compl_type(Completion *comp, const char *str, const size_t buf_len);
 
-// TODO take a default string (multibyte instead of wchar_t
-bool compl_state_init(Completion *comp, char **result, size_t *match_len);
-bool compl_state_match(Completion *comp, char **result, size_t *match_len);
-void compl_state_multi(Completion *comp, char **result, size_t *match_len);
+// these functions handle which item gets picked when completing, depending on state
+void compl_state_init(Completion *comp);
+void compl_state_single(Completion *comp);
+void compl_state_multi(Completion *comp);
 
-char* compl_complete(Completion *comp);
+// this is the main interface function for users to collect/cycle the next matched string
+char *compl_complete(Completion *comp);
 
 // these are helper functions to check string health etc.
 // TODO there must be equivalent mutt functions to handle user input safely
