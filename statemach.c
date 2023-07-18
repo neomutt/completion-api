@@ -31,13 +31,15 @@ Completion *compl_new(enum MuttMatchMode mode)
 {
   Completion *comp = mutt_mem_calloc(1, sizeof(Completion));
 
-  // initialise the typed string as empty
-  comp->typed_str = mutt_mem_calloc(MAX_TYPED, sizeof(char));
-  logdeb(4, "Memory allocation for comp->typed_str done, bytes: %lu.",
-         MAX_TYPED * sizeof(char));
-  strncpy(comp->typed_str, "", 1);
+  // initialise the typed item
+  comp->typed_item = mutt_mem_malloc(sizeof(CompletionItem));
+  comp->typed_item->str = mutt_mem_calloc(1, sizeof(CompletionItem));
+  comp->typed_item->is_match = true;
+  comp->typed_item->match_dist = -(MAX_TYPED + 1);
 
-  comp->cur_item = NULL;
+  mutt_strn_copy(comp->typed_item->str, "", 1, MAX_TYPED);
+
+  comp->cur_item = comp->typed_item;
 
   comp->state = MUTT_COMPL_NEW;
   comp->mode = mode;
@@ -46,8 +48,8 @@ Completion *compl_new(enum MuttMatchMode mode)
   comp->items = mutt_mem_calloc(1, sizeof(struct CompletionList));
   logdeb(4, "Memory allocation for comp->items done.");
   ARRAY_INIT(comp->items);
+  ARRAY_ADD(comp->items, *comp->cur_item);
 
-  comp->regex = mutt_mem_calloc(1, sizeof(regex_t));
   comp->regex_compiled = false;
   return comp;
 }
@@ -66,9 +68,9 @@ Completion * compl_from_array(const struct CompletionStringList *list, enum Mutt
 }
 
 void compl_free(Completion *comp) {
-  free(comp->typed_str);
+  free(comp->typed_item->str);
+  free(comp->typed_item);
   ARRAY_FREE(comp->items);
-  regfree(comp->regex);
 }
 
 int compl_add(Completion *comp, const char *str, size_t buf_len)
@@ -82,10 +84,11 @@ int compl_add(Completion *comp, const char *str, size_t buf_len)
   CompletionItem new_item = { 0 };
 
   // use a conservative memory allocation
-  new_item.str = mutt_mem_calloc(mutt_str_len(str) + 1, sizeof(char));
+  size_t item_len = mutt_str_len(str) + 1;
+  new_item.str = mutt_mem_calloc(item_len, sizeof(char));
   logdeb(4, "Mem alloc succeeded: new_item.str, bytes: %lu = %lu chars",
-         (mutt_str_len(str) + 1) * sizeof(char), mutt_str_len(str));
-  strncpy(new_item.str, str, buf_len);
+         (item_len) * sizeof(char), item_len - 1);
+  mutt_strn_copy(new_item.str, str, buf_len, item_len);
 
   new_item.is_match = false;
   new_item.match_dist = -1;
@@ -110,12 +113,10 @@ int compl_add(Completion *comp, const char *str, size_t buf_len)
 int compl_compile_regex(Completion *comp) {
   int comp_flags = REG_EXTENDED | REG_NEWLINE;
 
-  printf("a: %d\n", comp_flags);
   if (comp->flags & MUTT_MATCH_IGNORECASE)
     comp_flags |= REG_ICASE;
-  printf("b: %d\n", comp_flags);
 
-  int errcode = regcomp(comp->regex, comp->typed_str, comp_flags);
+  int errcode = regcomp(&comp->regex, comp->typed_item->str, comp_flags);
 
   // successful compilation
   if (errcode == 0)
@@ -126,14 +127,14 @@ int compl_compile_regex(Completion *comp) {
 
   // try a error message size of 20 first
   char *errmsg = calloc(20, sizeof(char));
-  int errsize = regerror(errcode, comp->regex, errmsg, 20);
+  int errsize = regerror(errcode, &comp->regex, errmsg, 20);
 
   // potential reallocation to fit the whole error message
   if (errsize >= 20)
   {
     free(errmsg);
     char *errmsg = calloc(errsize, sizeof(char));
-    regerror(errcode, comp->regex, errmsg, errsize);
+    regerror(errcode, &comp->regex, errmsg, errsize);
   }
 
   logerr("RegexCompilation: Error when compiling string. %s", errmsg);
@@ -152,9 +153,9 @@ int compl_type(Completion *comp, const char *str, size_t buf_len)
     return 0;
 
   // copy typed string into completion
-  strncpy(comp->typed_str, str, buf_len);
+  mutt_strn_copy(comp->typed_item->str, str, buf_len, MAX_TYPED);
 
-  logdeb(4, "Typing: '%s', (buf_len:%lu)", comp->typed_str, buf_len);
+  logdeb(4, "Typing: '%s', (buf_len:%lu)", comp->typed_item->str, buf_len);
 
   comp->state = MUTT_COMPL_INIT;
 
@@ -175,6 +176,12 @@ static int compl_sort_fn(const void *a, const void *b) {
   else if (!itema->is_match && !itemb->is_match)
     return mutt_str_coll(itema->str, itemb->str);
 
+  // the typed string stays at the front
+  if (itema->match_dist == -(MAX_TYPED + 1))
+    return -1;
+  else if (itemb->match_dist == -(MAX_TYPED + 1))
+    return 1;
+
   // matches are sorted by match distance
   int dist_diff = itema->match_dist - itemb->match_dist;
   if (dist_diff != 0)
@@ -190,12 +197,12 @@ static void compl_state_init(Completion *comp)
   int n_matches = 0;
   CompletionItem *item = NULL;
 
-  ARRAY_FOREACH(item, comp->items)
+  ARRAY_FOREACH_FROM(item, comp->items, 1)
   {
     item->match_dist = match_dist(item->str, comp);
     if (item->match_dist >= 0)
     {
-      logdeb(5, "'%s' matched: '%s'", comp->typed_str, item->str);
+      logdeb(5, "'%s' matched: '%s'", comp->typed_item->str, item->str);
       item->is_match = true;
 
       n_matches++;
@@ -207,8 +214,8 @@ static void compl_state_init(Completion *comp)
   if (n_matches == 0)
   {
     comp->state = MUTT_COMPL_NOMATCH;
-    comp->cur_item = NULL;
-    logdeb(4, "No match for '%s'.", comp->typed_str);
+    comp->cur_item = comp->typed_item;
+    logdeb(4, "No match for '%s'.", comp->typed_item->str);
   }
   else if (n_matches >= 1)
   {
@@ -218,25 +225,38 @@ static void compl_state_init(Completion *comp)
       comp->state = MUTT_COMPL_SINGLE;
 
     // first found item gets assigned to match
-    comp->cur_item = ARRAY_GET(comp->items, 0);
+    comp->cur_item = ARRAY_GET(comp->items, 1);
   }
 }
 
 static void compl_state_single(Completion *comp)
 {
-  // switch between match item and typed string
-  if (comp->cur_item == ARRAY_GET(comp->items, 0))
-    comp->cur_item = NULL;
-  else
-    comp->cur_item = ARRAY_GET(comp->items, 0);
+  int next_i = ARRAY_IDX(comp->items, comp->cur_item) + 1;
+
+  // cycle back to beginning if reaching end of array
+  if (next_i == ARRAY_SIZE(comp->items))
+    next_i = 0;
+
+  // cycle back if next item is not a match
+  if (!(ARRAY_GET(comp->items, next_i)->is_match) && !(comp->flags & MUTT_MATCH_SHOWALL))
+    next_i = 0;
+
+  // switch to next match
+  comp->cur_item = ARRAY_GET(comp->items, next_i);
 }
 
 static void compl_state_multi(Completion *comp)
 {
   CompletionItem *item = NULL;
 
+  int next_i = ARRAY_IDX(comp->items, comp->cur_item) + 1;
+
+  // cycle back to beginning
+  if (next_i == ARRAY_SIZE(comp->items))
+    next_i = 0;
+
   // TODO is ARRAY_FOREACH_FROM overflow safe? It seems to work for now, but maybe check twice!
-  ARRAY_FOREACH_FROM(item, comp->items, ARRAY_IDX(comp->items, comp->cur_item) + 1)
+  ARRAY_FOREACH_FROM(item, comp->items, next_i)
   {
     // assign next match
     if (item->is_match || (comp->flags & MUTT_MATCH_SHOWALL))
@@ -246,8 +266,8 @@ static void compl_state_multi(Completion *comp)
     }
   }
 
-  // when we reach the end, step back to the typed string
-  comp->cur_item = NULL;
+  // when we reach the end without finding anything, step back to the typed item
+  comp->cur_item = comp->typed_item;
 }
 
 char *compl_complete(Completion *comp)
@@ -257,7 +277,7 @@ char *compl_complete(Completion *comp)
 
   if (ARRAY_EMPTY(comp->items))
   {
-    logdeb(4, "Completion on empty list: '%s' -> ''", comp->typed_str);
+    logdeb(4, "Completion on empty list: '%s' -> ''", comp->typed_item->str);
     return NULL;
   }
 
@@ -279,11 +299,13 @@ char *compl_complete(Completion *comp)
       compl_state_init(comp);
       break;
 
+    // no match -> keep the typed item
     case MUTT_COMPL_NOMATCH:
-      comp->cur_item = NULL;
+      comp->cur_item = comp->typed_item;
       break;
 
-    case MUTT_COMPL_SINGLE: // return to typed string after matching single item
+    // return to typed string after matching single item
+    case MUTT_COMPL_SINGLE:
       compl_state_single(comp);
       break;
 
@@ -296,21 +318,17 @@ char *compl_complete(Completion *comp)
       break;
     case MUTT_COMPL_NEW:
     default:
-      comp->cur_item = NULL;
+      comp->cur_item = comp->typed_item;
   }
 
-  char *result = NULL;
-  if (comp->cur_item == NULL)
-    result = comp->typed_str;
-  else
-    result = comp->cur_item->str;
+  char *result = comp->cur_item->str;
 
   // TODO shall we use an existing pointer argument instead?
 
   // allocate new pointer for result
   size_t result_len = mutt_str_len(result) + 1;
   char *match = mutt_mem_calloc(result_len, sizeof(char));
-  strncpy(match, result, result_len);
+  mutt_strn_copy(match, result, result_len, result_len);
   logdeb(4, "Match is '%s' (buf:%lu)\n", match, result_len);
   return match;
 }
@@ -322,7 +340,7 @@ int compl_health_check(const Completion *comp)
     logerr("CompHealth: null pointer Completion struct.");
     return 0;
   }
-  if (!comp->typed_str)
+  if (!comp->typed_item->str)
   {
     logerr("CompHealth: null pointer typed string.");
     return 0;
@@ -417,13 +435,13 @@ static int dist_regex(const char *tar, const Completion *comp)
   int regex_flags = REG_EXTENDED;
 
   // check for a match
-  if (regexec(comp->regex, tar, 1, pmatch, regex_flags) == REG_NOMATCH)
+  if (regexec(&comp->regex, tar, 1, pmatch, regex_flags) == REG_NOMATCH)
   {
     logdeb(4, "DistRegex: No match found.");
     return -1;
   }
 
-  size_t src_len = mutt_str_len(comp->typed_str);
+  size_t src_len = mutt_str_len(comp->typed_item->str);
   size_t tar_len = mutt_str_len(tar);
 
   // match distance is the number of additions needed to match the string
@@ -448,7 +466,7 @@ static int dist_regex(const char *tar, const Completion *comp)
  */
 static int dist_exact(const char *tar, const Completion *comp)
 {
-  char *src = comp->typed_str;
+  char *src = comp->typed_item->str;
   bool src_mbs = is_mbs(src);
   bool tar_mbs = is_mbs(tar);
 

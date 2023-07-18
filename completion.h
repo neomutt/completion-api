@@ -47,7 +47,7 @@ ARRAY_HEAD(CompletionList, CompletionItem);
 ARRAY_HEAD(CompletionStringList, char *);
 
 typedef struct Completion {
-  char *typed_str;
+  CompletionItem *typed_item;
   CompletionItem *cur_item;
   size_t stem_len;
   MuttCompletionState state;
@@ -56,6 +56,6 @@ typedef struct Completion {
   struct CompletionList *items;
   // store the compiled regcomp regex for faster list matching
   bool regex_compiled;
-  regex_t *regex;
+  regex_t regex;
 } Completion;
 #endif

@@ -172,7 +172,7 @@ int dist_lev(const char *stra, const char *strb)
  */
 int dist_dam_lev(const char *tar, const struct Completion *comp)
 {
-  const char *src = comp->typed_str;
+  const char *src = comp->typed_item->str;
   int len_src = mbs_char_count(src);
   int len_tar = mbs_char_count(tar);
 
