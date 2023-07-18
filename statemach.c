@@ -173,7 +173,7 @@ static int compl_sort_fn(const void *a, const void *b) {
   else if (!itema->is_match && itemb->is_match)
     return 1;
   else if (!itema->is_match && !itemb->is_match)
-    return strcoll(itema->str, itemb->str);
+    return mutt_str_coll(itema->str, itemb->str);
 
   // matches are sorted by match distance
   int dist_diff = itema->match_dist - itemb->match_dist;
@@ -181,7 +181,7 @@ static int compl_sort_fn(const void *a, const void *b) {
     return dist_diff;
 
   // matches with equal match distance are sorted alphabetically
-  return strcoll(itema->str, itemb->str);
+  return mutt_str_coll(itema->str, itemb->str);
 }
 
 bool compl_state_init(Completion *comp, char **result, size_t *match_len)
@@ -476,6 +476,7 @@ static int dist_exact(const char *tar, const Completion *comp)
       len_tar = mbs_char_count(tar);
       wchar_t w_src[len_src + 1];
       wchar_t w_tar[len_tar + 1];
+      // TODO add an equivalent function to mutt/mbyte
       mbstowcs(w_src, src, len_src + 1);
       mbstowcs(w_tar, tar, len_src + 1);
 
@@ -493,11 +494,11 @@ static int dist_exact(const char *tar, const Completion *comp)
       return (len_tar - len_src);
     }
 
-    if (strncasecmp(src, tar, len_src) == 0)
+    if (mutt_istrn_cmp(src, tar, len_src) == 0)
       return len_tar - len_src;
   }
   else {
-    if (strncmp(src, tar, len_src) != 0)
+    if (mutt_strn_cmp(src, tar, len_src) != 0)
       return -1;
 
     // insertions are calculated differently for mbs
