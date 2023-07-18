@@ -1,14 +1,14 @@
-NEO	?= ../neo
+NEOMUTTDIR	?= ../neo
 RM	= rm -fr
 
 CFLAGS	+= -Wall
 CFLAGS	+= -g
 CFLAGS	+= -O0
-CFLAGS	+= -I$(NEO)
-CFLAGS	+= -I$(NEO)/test
+CFLAGS	+= -I$(NEOMUTTDIR)
+CFLAGS	+= -I$(NEOMUTTDIR)/test
 CFLAGS	+= -std=c99
 
-LDFLAGS	+= -L$(NEO)
+LDFLAGS	+= -L$(NEOMUTTDIR)
 LDFLAGS	+= -lmutt
 LDFLAGS	+= -lpcre2-8
 
@@ -62,7 +62,7 @@ test:	test_statemach test_exact test_matching test_fuzzy test_regex
 	./test_regex
 
 clean:
-	$(RM) $(OBJ_SHARED) $(OBJ_STATE) $(OBJ_EXACT) $(OBJ_MATCH) $(OBJ_FUZZY) $(OBJ_REGEX) $(OUT)
+	$(RM) $(OBJ_SHARED) $(OBJ_STATE) $(OBJ_EXACT) $(OBJ_MATCH) $(OBJ_FUZZY) $(OBJ_REGEX) $(OUT) *.gcda *.gcno
 
 distclean: clean
 	$(RM) tags
