@@ -300,12 +300,12 @@ char *compl_complete(Completion *comp)
   {
     case MUTT_COMPL_INIT:
       if (!compl_state_init(comp, &result, &match_len))
-        return NULL;
+        return comp->typed_str;
       break;
 
     case MUTT_COMPL_MATCH: // return to typed string after matching single item
       if (!compl_state_match(comp, &result, &match_len))
-        return NULL;
+        return comp->typed_str;
       break;
 
     case MUTT_COMPL_MULTI: // use next match
@@ -313,7 +313,7 @@ char *compl_complete(Completion *comp)
       break;
     case MUTT_COMPL_NEW:
     default:
-      return NULL;
+      return comp->typed_str;
   }
 
   // convert result into new pointer for user

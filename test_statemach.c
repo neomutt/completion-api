@@ -112,7 +112,7 @@ void state_nomatch(void)
   char *result = NULL;
   result = compl_complete(comp);
 
-  TEST_CHECK(result == NULL);
+  TEST_CHECK(STR_EQ(result, "bertha"));
 
   compl_free(comp);
 }
