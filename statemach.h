@@ -69,11 +69,6 @@ int compl_compile_regex(Completion *comp);
 int compl_add(Completion *comp, const char *str, const size_t buf_len);
 int compl_type(Completion *comp, const char *str, const size_t buf_len);
 
-// these functions handle which item gets picked when completing, depending on state
-void compl_state_init(Completion *comp);
-void compl_state_single(Completion *comp);
-void compl_state_multi(Completion *comp);
-
 // this is the main interface function for users to collect/cycle the next matched string
 char *compl_complete(Completion *comp);
 

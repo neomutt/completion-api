@@ -184,7 +184,7 @@ static int compl_sort_fn(const void *a, const void *b) {
   return mutt_str_coll(itema->str, itemb->str);
 }
 
-void compl_state_init(Completion *comp)
+static void compl_state_init(Completion *comp)
 {
   logdeb(5, "Initialising completion...");
   int n_matches = 0;
@@ -222,7 +222,7 @@ void compl_state_init(Completion *comp)
   }
 }
 
-void compl_state_single(Completion *comp)
+static void compl_state_single(Completion *comp)
 {
   // switch between match item and typed string
   if (comp->cur_item == ARRAY_GET(comp->items, 0))
@@ -231,7 +231,7 @@ void compl_state_single(Completion *comp)
     comp->cur_item = ARRAY_GET(comp->items, 0);
 }
 
-void compl_state_multi(Completion *comp)
+static void compl_state_multi(Completion *comp)
 {
   CompletionItem *item = NULL;
 

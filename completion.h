@@ -24,7 +24,7 @@ enum MuttMatchMode
 
 typedef uint8_t MuttMatchFlags;
 
-#define MUTT_MATCH_NOFLAGS           0
+#define MUTT_MATCH_NOFLAGS           0  /// this means cycle results, case-sensitive
 #define MUTT_MATCH_IGNORECASE  (1 << 1) /// ignore case when matching
 #define MUTT_MATCH_FIRSTMATCH  (1 << 2) /// < Return only the first match
 #define MUTT_MATCH_SHOWALL     (1 << 3) /// < Return non-matches after all matches
