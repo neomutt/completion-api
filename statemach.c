@@ -28,12 +28,10 @@
 #include "private.h"
 
 /**
- * @param mode which matching mode to use (see 
- * @param idx  Index, between 0 and ARRAY_SIZE()-1
- * @retval ptr  Pointer to the element at the given index
- * @retval NULL Index was out of bounds
+ * Function to allocate and initialise a new Completion struct
  *
- * @note Because it is possible to add elements in the middle of the array, it
+ * @param mode which matching mode to use (see COMPL_MODE_*)
+ * @retval ptr pointer to an initialised Completion struct
  */
 Completion *compl_new(enum MuttMatchMode mode)
 {
@@ -62,6 +60,13 @@ Completion *compl_new(enum MuttMatchMode mode)
   return comp;
 }
 
+/**
+ * Function to allocate and initialise a new Completion struct, along with
+ * adding items
+ *
+ * @param list a CompletionStringList of items to add right after initialisation
+ * @retval ptr pointer to an initialised Completion struct
+ */
 Completion * compl_from_array(const struct CompletionStringList *list, enum MuttMatchMode mode)
 {
   Completion *comp = compl_new(mode);
@@ -75,12 +80,24 @@ Completion * compl_from_array(const struct CompletionStringList *list, enum Mutt
   return comp;
 }
 
+/**
+ * Function to free the Completion struct
+ *
+ * @param comp Completion struct to free
+ */
 void compl_free(Completion *comp) {
   free(comp->typed_item->str);
   free(comp->typed_item);
   ARRAY_FREE(comp->items);
 }
 
+/**
+ * adds a new string to the list of possible completions
+ *
+ * @param comp Completion struct
+ * @param str string to add
+ * @param buf_len length of the string buffer
+ */
 int compl_add(Completion *comp, const char *str, size_t buf_len)
 {
   if (!compl_health_check(comp))
@@ -118,6 +135,14 @@ int compl_add(Completion *comp, const char *str, size_t buf_len)
   return 1;
 }
 
+/**
+ * compile the regular expression from the typed string
+ *
+ * @param comp Completion struct
+ * @retval success 1 if successful, 0 otherwise
+ *
+ * @note this is automatically called when using the API functions
+ */
 int compl_compile_regex(Completion *comp) {
   int comp_flags = REG_EXTENDED | REG_NEWLINE;
 
@@ -152,6 +177,14 @@ int compl_compile_regex(Completion *comp) {
   return 0;
 }
 
+/**
+ * type a string to be completed (user input)
+ *
+ * @param comp Completion struct
+ * @param str user input
+ * @param buf_len buffer length of str
+ * @retval success 1 if successful, 0 otherwise
+ */
 int compl_type(Completion *comp, const char *str, size_t buf_len)
 {
   if (!compl_health_check(comp))
@@ -172,6 +205,18 @@ int compl_type(Completion *comp, const char *str, size_t buf_len)
   return 1;
 }
 
+/**
+ * qsort sorting function for CompletionItems.
+ *
+ * Items will be sorted following these criteria (in sequence)
+ *  - match
+ *  - match distance
+ *  - alphabetical
+ *
+ * @param a pointer to CompletionItem a
+ * @param b pointer to CompletionItem b
+ * @retval cmp -1 if a precedes b, 0 if a equals b, 1 if b preceds a
+ */
 static int compl_sort_fn(const void *a, const void *b) {
   const CompletionItem *itema = (const CompletionItem *)a;
   const CompletionItem *itemb = (const CompletionItem *)b;
