@@ -15,39 +15,39 @@ void test_match(void)
   Completion *comp = compl_new(COMPL_MODE_EXACT);
 
   // basic match and non-match
-  comp->typed_str = "Hello";
+  comp->typed_item->str = "Hello";
   TEST_CHECK(match_dist("Hello", comp) == 0);
   TEST_CHECK(match_dist("Bye", comp) == -1);
-  comp->typed_str = "Übel";
+  comp->typed_item->str = "Übel";
   TEST_CHECK(match_dist("Übel", comp) == 0);
-  comp->typed_str = "übel";
+  comp->typed_item->str = "übel";
   TEST_CHECK(match_dist("Übel", comp) == -1);
 
   // match substring only
-  comp->typed_str = "Hel";
+  comp->typed_item->str = "Hel";
   TEST_CHECK(match_dist("Hello", comp) == 2);
 
   // match empty string
-  comp->typed_str = "";
+  comp->typed_item->str = "";
   TEST_CHECK(match_dist("HELLO", comp) == 5);
   TEST_CHECK(match_dist("neomuttisawesome", comp) == 16);
 
   comp->mode = COMPL_MODE_EXACT;
   comp->flags = MUTT_MATCH_IGNORECASE;
   // match case-insensitive
-  comp->typed_str = "hel";
+  comp->typed_item->str = "hel";
   TEST_CHECK(match_dist("Helloworld", comp) == 7);
-  comp->typed_str = "HEL";
+  comp->typed_item->str = "HEL";
   TEST_CHECK(match_dist("Helloworld", comp) == 7);
-  comp->typed_str = "übel";
+  comp->typed_item->str = "übel";
   TEST_CHECK(match_dist("Übel", comp) == 0);
 
   // match case-sensitive ONLY
   comp->mode = COMPL_MODE_EXACT;
   comp->flags = MUTT_MATCH_NOFLAGS;
-  comp->typed_str = "hel";
+  comp->typed_item->str = "hel";
   TEST_CHECK(match_dist("Helloworld", comp) == -1);
-  comp->typed_str = "HEL";
+  comp->typed_item->str = "HEL";
   TEST_CHECK(match_dist("Helloworld", comp) == -1);
   TEST_CHECK(match_dist("HELloworld", comp) == 7);
 }
@@ -59,53 +59,53 @@ void test_exact(void)
   Completion *comp = compl_new(COMPL_MODE_EXACT);
 
   // test some regular ASCII strings
-  comp->typed_str = "abc";
+  comp->typed_item->str = "abc";
   TEST_CHECK(match_dist("Abc", comp) == -1);
   TEST_CHECK(match_dist("abc", comp) == 0);
 
   comp->mode = COMPL_MODE_EXACT;
   comp->flags = MUTT_MATCH_IGNORECASE;
-  comp->typed_str = "abc";
+  comp->typed_item->str = "abc";
   TEST_CHECK(match_dist("Abc", comp) == 0);
-  comp->typed_str = "wxy";
+  comp->typed_item->str = "wxy";
   TEST_CHECK(match_dist("wxy", comp) == 0);
 
   // test multibyte comparison
   comp->mode = COMPL_MODE_EXACT;
   comp->flags = MUTT_MATCH_NOFLAGS;
-  comp->typed_str = "äpfel";
+  comp->typed_item->str = "äpfel";
   TEST_CHECK(match_dist("Äpfel", comp) == -1);
   comp->mode = COMPL_MODE_EXACT;
   comp->flags = MUTT_MATCH_IGNORECASE;
   TEST_CHECK(match_dist("Äpfel", comp) == 0);
-  comp->typed_str = "zabc";
+  comp->typed_item->str = "zabc";
   TEST_CHECK(match_dist("öxrya", comp) == -1);
 
   // test some other symbols
   comp->mode = COMPL_MODE_EXACT;
   comp->flags = MUTT_MATCH_NOFLAGS;
-  comp->typed_str = "c";
+  comp->typed_item->str = "c";
   TEST_CHECK(match_dist("Z", comp) == -1);
-  comp->typed_str = ";";
+  comp->typed_item->str = ";";
   TEST_CHECK(match_dist("Z", comp) == -1);
-  comp->typed_str = "a";
+  comp->typed_item->str = "a";
   TEST_CHECK(match_dist("!", comp) == -1);
-  comp->typed_str = "ß";
+  comp->typed_item->str = "ß";
   TEST_CHECK(match_dist("ß😀", comp) == 1);
-  comp->typed_str = "世";
+  comp->typed_item->str = "世";
   TEST_CHECK(match_dist("世界", comp) == 1);
 
   comp->mode = COMPL_MODE_EXACT;
   comp->flags = MUTT_MATCH_IGNORECASE;
-  comp->typed_str = "c";
+  comp->typed_item->str = "c";
   TEST_CHECK(match_dist("Z", comp) == -1);
-  comp->typed_str = ";";
+  comp->typed_item->str = ";";
   TEST_CHECK(match_dist("Z", comp) == -1);
-  comp->typed_str = "a";
+  comp->typed_item->str = "a";
   TEST_CHECK(match_dist("!", comp) == -1);
-  comp->typed_str = "ß";
+  comp->typed_item->str = "ß";
   TEST_CHECK(match_dist("ß😀", comp) == 1);
-  comp->typed_str = "世";
+  comp->typed_item->str = "世";
   TEST_CHECK(match_dist("世界", comp) == 1);
 }
 

@@ -5,7 +5,7 @@
 void test_match_simple()
 {
   Completion *comp = compl_new(COMPL_MODE_EXACT);
-  comp->typed_str = "apples";
+  comp->typed_item->str = "apples";
   char *tar = "applers";
 
   comp->mode = COMPL_MODE_EXACT;
@@ -13,14 +13,14 @@ void test_match_simple()
   comp->mode = COMPL_MODE_FUZZY;
   TEST_CHECK(match_dist(tar, comp) == 1);
 
-  comp->typed_str = "derived";
+  comp->typed_item->str = "derived";
   tar = "drvd";
 
   comp->mode = COMPL_MODE_EXACT;
   TEST_CHECK(match_dist(tar, comp) == -1);
   comp->mode = COMPL_MODE_FUZZY;
   TEST_CHECK(match_dist(tar, comp) == 3);
-  comp->typed_str = "drvd";
+  comp->typed_item->str = "drvd";
   comp->mode = COMPL_MODE_EXACT;
   TEST_CHECK(match_dist(tar, comp) == 0);
 }

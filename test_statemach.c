@@ -90,7 +90,7 @@ void state_empty(void)
   char *result = NULL;
   result = compl_complete(comp);
 
-  TEST_CHECK(result == NULL);
+  TEST_CHECK(STR_EQ(result, ""));
 
   compl_free(comp);
 }
@@ -138,7 +138,7 @@ void state_single(void)
 
   printf("Tabbing again to reset...\n");
   result = compl_complete(comp);
-  printf("  ar -> ar: (%s)\n", result);
+
   TEST_CHECK(STR_EQ(result, "ar"));
 
   compl_free(comp);
@@ -219,22 +219,21 @@ void duplicate_add(void)
   compl_add(comp, "apfel", 6);
   compl_add(comp, "apple", 6);
 
-  TEST_CHECK(compl_get_size(comp) == 2);
+  TEST_CHECK(compl_get_size(comp) == 3);
 
   compl_add(comp, "apple", 6);
 
-  printf("We added a duplicate...\n");
-  TEST_CHECK(compl_get_size(comp) == 2);
+  TEST_CHECK(compl_get_size(comp) == 3);
 
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
   compl_add(comp, "Äpfel", 6);
 
-  TEST_CHECK(compl_get_size(comp) == 3);
+  TEST_CHECK(compl_get_size(comp) == 4);
 
   compl_add(comp, "Äpfel", 6);
   printf("Another duplicate, this time unicode...\n");
-  TEST_CHECK(compl_get_size(comp) == 3);
+  TEST_CHECK(compl_get_size(comp) == 4);
 
   compl_free(comp);
 }

@@ -88,47 +88,47 @@ void test_damerau_levenshtein(void)
   Completion *comp = compl_new(COMPL_MODE_FUZZY);
 
   // null pointers checks
-  comp->typed_str = NULL;
+  comp->typed_item->str = NULL;
   TEST_CHECK(dist_dam_lev("123", comp) == 3);
   TEST_CHECK(dist_dam_lev(NULL, comp) == 0);
-  comp->typed_str = "123";
+  comp->typed_item->str = "123";
   TEST_CHECK(dist_dam_lev(NULL, comp) == 3);
   TEST_CHECK(dist_dam_lev("", comp) == 3);
-  comp->typed_str = "";
+  comp->typed_item->str = "";
   TEST_CHECK(dist_dam_lev("", comp) == 0);
   TEST_CHECK(dist_dam_lev("123", comp) == 3);
 
   // bad mbytes should always fail
   char *mbyte = "ä";
-  comp->typed_str = &mbyte[1];
+  comp->typed_item->str = &mbyte[1];
   TEST_CHECK(dist_dam_lev("abc", comp) == -1);
   TEST_CHECK(dist_dam_lev(&mbyte[1], comp) == -1);
-  comp->typed_str = mbyte;
+  comp->typed_item->str = mbyte;
   TEST_CHECK(dist_dam_lev(&mbyte[1], comp) == -1);
 
   // some made-up tests
-  comp->typed_str = "chitin";
+  comp->typed_item->str = "chitin";
   TEST_CHECK(dist_dam_lev("chtia", comp) == 2);
-  comp->typed_str = "hello";
+  comp->typed_item->str = "hello";
   TEST_CHECK(dist_dam_lev("hell", comp) == 1);
-  comp->typed_str = "peter";
+  comp->typed_item->str = "peter";
   TEST_CHECK(dist_dam_lev("pteer", comp) == 1);
-  comp->typed_str = "pete";
+  comp->typed_item->str = "pete";
   TEST_CHECK(dist_dam_lev("ptee", comp) == 1);
   TEST_CHECK(dist_dam_lev("pteer", comp) == 2);
-  comp->typed_str = "email";
+  comp->typed_item->str = "email";
   TEST_CHECK(dist_dam_lev("mail", comp) == 1);
 
   // one insertion, one transposition
-  comp->typed_str = "fltcap";
+  comp->typed_item->str = "fltcap";
   TEST_CHECK(dist_dam_lev("flatcpa", comp) == 2);
 
   // mbyte transposition
-  comp->typed_str = "päfel";
+  comp->typed_item->str = "päfel";
   TEST_CHECK(dist_dam_lev("äpfel", comp) == 1);
-  comp->typed_str = "xpäfel";
+  comp->typed_item->str = "xpäfel";
   TEST_CHECK(dist_dam_lev("xäpfel", comp) == 1);
-  comp->typed_str = "te";
+  comp->typed_item->str = "te";
   TEST_CHECK(dist_dam_lev("et", comp) == 1);
 
   // mbyte substitution
