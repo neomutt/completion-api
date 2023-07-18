@@ -1,6 +1,6 @@
 /**
  * @file
- * Autocompletion API
+ * Autocompletion API statemachine
  *
  * @authors
  * Copyright (C) 2023 Simon V. Reichel <simonreichel@giese-optik.de>

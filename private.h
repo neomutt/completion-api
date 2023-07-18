@@ -1,6 +1,6 @@
 /**
  * @file
- * Autocompletion API
+ * Autocompletion API helper functions
  *
  * @authors
  * Copyright (C) 2023 Simon V. Reichel <simonreichel@giese-optik.de>
