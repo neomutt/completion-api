@@ -4,17 +4,16 @@
 #include <regex.h>
 #include "mutt/array.h"
 
-#ifndef MUTT_COMPL_NEW
+#ifndef COMPLETION
+#define COMPLETION
 typedef uint8_t MuttCompletionState;
 
-#define MUTT_COMPL_NEW        0        /// < Initial state
-#define MUTT_COMPL_INIT      (1 << 0)  /// < Initial state
-#define MUTT_COMPL_SINGLE    (1 << 1)  /// < Match found
-#define MUTT_COMPL_MULTI     (1 << 2)  /// < Multiple matches with common stem
-#define MUTT_COMPL_NOMATCH   (1 << 3)  /// < No Match found
-#endif
+#define COMPL_STATE_NEW        0        /// < Initial state
+#define COMPL_STATE_INIT      (1 << 0)  /// < Initial state
+#define COMPL_STATE_SINGLE    (1 << 1)  /// < Match found
+#define COMPL_STATE_MULTI     (1 << 2)  /// < Multiple matches with common stem
+#define COMPL_STATE_NOMATCH   (1 << 3)  /// < No Match found
 
-#ifndef MUTT_MATCH_NOFLAGS
 enum MuttMatchMode
 {
   COMPL_MODE_EXACT = 1,
@@ -24,19 +23,14 @@ enum MuttMatchMode
 
 typedef uint8_t MuttMatchFlags;
 
-#define MUTT_MATCH_NOFLAGS           0  /// this means cycle results, case-sensitive
-#define MUTT_MATCH_IGNORECASE  (1 << 1) /// ignore case when matching
-#define MUTT_MATCH_FIRSTMATCH  (1 << 2) /// < Return only the first match
-#define MUTT_MATCH_SHOWALL     (1 << 3) /// < Return non-matches after all matches
-#endif
+#define COMPL_MATCH_NOFLAGS           0  /// this means cycle results, case-sensitive
+#define COMPL_MATCH_IGNORECASE  (1 << 1) /// ignore case when matching
+#define COMPL_MATCH_FIRSTMATCH  (1 << 2) /// < Return only the first match
+#define COMPL_MATCH_SHOWALL     (1 << 3) /// < Return non-matches after all matches
 
-#ifndef MUTT_MATCHING
-#define MUTT_MATCHING
-#define REGERRORSIZE 30
-#endif
+// needed for regcomp error reporting
+#define COMPL_REGERRORSIZE 30
 
-#ifndef MUTT_COMPLETION
-#define MUTT_COMPLETION
 typedef struct CompletionItem {
   char *str;
   int match_dist;

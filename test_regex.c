@@ -41,7 +41,7 @@ void test_simple_regex(void)
   compl_compile_regex(comp);
   TEST_CHECK(match_dist("abrakadapple\nerror", comp) == -1);
 
-  comp->flags = MUTT_MATCH_IGNORECASE;
+  comp->flags = COMPL_MATCH_IGNORECASE;
   comp->typed_item->str = ".*pple";
   compl_compile_regex(comp);
   TEST_CHECK(match_dist("abrakadAPPLE", comp) == 6);

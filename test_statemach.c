@@ -150,7 +150,7 @@ void state_single_utf8(void)
   setlocale(LC_ALL, "en_US.UTF-8");
   printf("\n");
   Completion *comp = compl_new(COMPL_MODE_EXACT);
-  comp->flags = MUTT_MATCH_IGNORECASE;
+  comp->flags = COMPL_MATCH_IGNORECASE;
 
   compl_add(comp, "apfel", 6);
   compl_add(comp, "apple", 6);

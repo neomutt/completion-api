@@ -27,6 +27,14 @@
  */
 #include "private.h"
 
+/**
+ * @param mode which matching mode to use (see 
+ * @param idx  Index, between 0 and ARRAY_SIZE()-1
+ * @retval ptr  Pointer to the element at the given index
+ * @retval NULL Index was out of bounds
+ *
+ * @note Because it is possible to add elements in the middle of the array, it
+ */
 Completion *compl_new(enum MuttMatchMode mode)
 {
   Completion *comp = mutt_mem_calloc(1, sizeof(Completion));
@@ -41,9 +49,9 @@ Completion *compl_new(enum MuttMatchMode mode)
 
   comp->cur_item = comp->typed_item;
 
-  comp->state = MUTT_COMPL_NEW;
+  comp->state = COMPL_STATE_NEW;
   comp->mode = mode;
-  comp->flags = MUTT_MATCH_NOFLAGS;
+  comp->flags = COMPL_MATCH_NOFLAGS;
 
   comp->items = mutt_mem_calloc(1, sizeof(struct CompletionList));
   logdeb(4, "Memory allocation for comp->items done.");
@@ -113,7 +121,7 @@ int compl_add(Completion *comp, const char *str, size_t buf_len)
 int compl_compile_regex(Completion *comp) {
   int comp_flags = REG_EXTENDED | REG_NEWLINE;
 
-  if (comp->flags & MUTT_MATCH_IGNORECASE)
+  if (comp->flags & COMPL_MATCH_IGNORECASE)
     comp_flags |= REG_ICASE;
 
   int errcode = regcomp(&comp->regex, comp->typed_item->str, comp_flags);
@@ -157,7 +165,7 @@ int compl_type(Completion *comp, const char *str, size_t buf_len)
 
   logdeb(4, "Typing: '%s', (buf_len:%lu)", comp->typed_item->str, buf_len);
 
-  comp->state = MUTT_COMPL_INIT;
+  comp->state = COMPL_STATE_INIT;
 
   // flag regex compilation out of date after typing
   comp->regex_compiled = false;
@@ -213,16 +221,16 @@ static void compl_state_init(Completion *comp)
 
   if (n_matches == 0)
   {
-    comp->state = MUTT_COMPL_NOMATCH;
+    comp->state = COMPL_STATE_NOMATCH;
     comp->cur_item = comp->typed_item;
     logdeb(4, "No match for '%s'.", comp->typed_item->str);
   }
   else if (n_matches >= 1)
   {
     if (n_matches > 1)
-      comp->state = MUTT_COMPL_MULTI;
+      comp->state = COMPL_STATE_MULTI;
     else
-      comp->state = MUTT_COMPL_SINGLE;
+      comp->state = COMPL_STATE_SINGLE;
 
     // first found item gets assigned to match
     comp->cur_item = ARRAY_GET(comp->items, 1);
@@ -238,7 +246,7 @@ static void compl_state_single(Completion *comp)
     next_i = 0;
 
   // cycle back if next item is not a match
-  if (!(ARRAY_GET(comp->items, next_i)->is_match) && !(comp->flags & MUTT_MATCH_SHOWALL))
+  if (!(ARRAY_GET(comp->items, next_i)->is_match) && !(comp->flags & COMPL_MATCH_SHOWALL))
     next_i = 0;
 
   // switch to next match
@@ -259,7 +267,7 @@ static void compl_state_multi(Completion *comp)
   ARRAY_FOREACH_FROM(item, comp->items, next_i)
   {
     // assign next match
-    if (item->is_match || (comp->flags & MUTT_MATCH_SHOWALL))
+    if (item->is_match || (comp->flags & COMPL_MATCH_SHOWALL))
     {
       comp->cur_item = item;
       return;
@@ -295,28 +303,28 @@ char *compl_complete(Completion *comp)
 
   switch (comp->state)
   {
-    case MUTT_COMPL_INIT:
+    case COMPL_STATE_INIT:
       compl_state_init(comp);
       break;
 
     // no match -> keep the typed item
-    case MUTT_COMPL_NOMATCH:
+    case COMPL_STATE_NOMATCH:
       comp->cur_item = comp->typed_item;
       break;
 
     // return to typed string after matching single item
-    case MUTT_COMPL_SINGLE:
+    case COMPL_STATE_SINGLE:
       compl_state_single(comp);
       break;
 
-    case MUTT_COMPL_MULTI: // use next match
+    case COMPL_STATE_MULTI: // use next match
       // matching only first hit -> return to the initial match
-      if (comp->flags & MUTT_MATCH_FIRSTMATCH)
+      if (comp->flags & COMPL_MATCH_FIRSTMATCH)
         compl_state_single(comp);
       else
         compl_state_multi(comp);
       break;
-    case MUTT_COMPL_NEW:
+    case COMPL_STATE_NEW:
     default:
       comp->cur_item = comp->typed_item;
   }
@@ -458,7 +466,7 @@ static int dist_regex(const char *tar, const Completion *comp)
 /**
  * matches the source against the target string, using exact comparison.
  * Returns -1 if there is no match, or 0 if the strings match.
- * If MUTT_MATCH_IGNORECASE is set, it will ignore case.
+ * If COMPL_MATCH_IGNORECASE is set, it will ignore case.
  *
  * @param src source string
  * @param tar target string
@@ -478,7 +486,7 @@ static int dist_exact(const char *tar, const Completion *comp)
     return -1;
 
   // compare all bytes of src with tar
-  if (comp->flags & MUTT_MATCH_IGNORECASE)
+  if (comp->flags & COMPL_MATCH_IGNORECASE)
   {
     if (src_mbs || tar_mbs)
     {
@@ -526,7 +534,7 @@ static int dist_exact(const char *tar, const Completion *comp)
  * match_dist calculates the string distance between the typed and target-string,
  * based on the match method (MuttMatchFlags)
  *
- * When using MUTT_MATCH_REGEX, the regular expression needs to be compiled
+ * When using COMPL_MODE_REGEX, the regular expression needs to be compiled
  * first (compl_compile_regex).
  *
  * @param strb target string

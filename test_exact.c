@@ -33,7 +33,7 @@ void test_match(void)
   TEST_CHECK(match_dist("neomuttisawesome", comp) == 16);
 
   comp->mode = COMPL_MODE_EXACT;
-  comp->flags = MUTT_MATCH_IGNORECASE;
+  comp->flags = COMPL_MATCH_IGNORECASE;
   // match case-insensitive
   comp->typed_item->str = "hel";
   TEST_CHECK(match_dist("Helloworld", comp) == 7);
@@ -44,7 +44,7 @@ void test_match(void)
 
   // match case-sensitive ONLY
   comp->mode = COMPL_MODE_EXACT;
-  comp->flags = MUTT_MATCH_NOFLAGS;
+  comp->flags = COMPL_MATCH_NOFLAGS;
   comp->typed_item->str = "hel";
   TEST_CHECK(match_dist("Helloworld", comp) == -1);
   comp->typed_item->str = "HEL";
@@ -64,7 +64,7 @@ void test_exact(void)
   TEST_CHECK(match_dist("abc", comp) == 0);
 
   comp->mode = COMPL_MODE_EXACT;
-  comp->flags = MUTT_MATCH_IGNORECASE;
+  comp->flags = COMPL_MATCH_IGNORECASE;
   comp->typed_item->str = "abc";
   TEST_CHECK(match_dist("Abc", comp) == 0);
   comp->typed_item->str = "wxy";
@@ -72,18 +72,18 @@ void test_exact(void)
 
   // test multibyte comparison
   comp->mode = COMPL_MODE_EXACT;
-  comp->flags = MUTT_MATCH_NOFLAGS;
+  comp->flags = COMPL_MATCH_NOFLAGS;
   comp->typed_item->str = "äpfel";
   TEST_CHECK(match_dist("Äpfel", comp) == -1);
   comp->mode = COMPL_MODE_EXACT;
-  comp->flags = MUTT_MATCH_IGNORECASE;
+  comp->flags = COMPL_MATCH_IGNORECASE;
   TEST_CHECK(match_dist("Äpfel", comp) == 0);
   comp->typed_item->str = "zabc";
   TEST_CHECK(match_dist("öxrya", comp) == -1);
 
   // test some other symbols
   comp->mode = COMPL_MODE_EXACT;
-  comp->flags = MUTT_MATCH_NOFLAGS;
+  comp->flags = COMPL_MATCH_NOFLAGS;
   comp->typed_item->str = "c";
   TEST_CHECK(match_dist("Z", comp) == -1);
   comp->typed_item->str = ";";
@@ -96,7 +96,7 @@ void test_exact(void)
   TEST_CHECK(match_dist("世界", comp) == 1);
 
   comp->mode = COMPL_MODE_EXACT;
-  comp->flags = MUTT_MATCH_IGNORECASE;
+  comp->flags = COMPL_MATCH_IGNORECASE;
   comp->typed_item->str = "c";
   TEST_CHECK(match_dist("Z", comp) == -1);
   comp->typed_item->str = ";";
