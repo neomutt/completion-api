@@ -1,4 +1,4 @@
-#include "fuzzy.h"
+#include "private.h"
 
 /**
  * min - return the minimum value of three integers

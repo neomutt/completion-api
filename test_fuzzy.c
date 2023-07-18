@@ -2,9 +2,8 @@
 #include "acutest.h"
 #include <locale.h>
 #include "mutt/mbyte.h"
-#include "completion.h"
-#include "statemach.h"
-#include "fuzzy.h"
+#include "lib.h"
+#include "private.h"
 
 void test_mbs_char_count(void)
 {

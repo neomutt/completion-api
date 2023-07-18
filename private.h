@@ -38,8 +38,7 @@
 #include "mutt/mbyte.h"
 #include "mutt_logging.h"
 #include "config.h"
-#include "completion.h"
-#include "fuzzy.h"
+#include "lib.h"
 
 #ifndef MAX_TYPED
 #define MAX_TYPED 100
@@ -82,4 +81,19 @@ bool        compl_check_duplicate(const Completion *comp, const char *str, const
 
 // the main matching function
 int         match_dist(const char *tar, const Completion *comp);
+#endif
+
+#ifndef ISLONGMBYTE
+// TODO might want to move these to mutt/mbyte.h or mutt/string2.h
+#define ISLONGMBYTE(mbyte) mblen(mbyte, MB_CUR_MAX) > 1
+#define MBCHARLEN(mbyte) mblen(mbyte, MB_CUR_MAX)
+#define ISBADMBYTE(mbyte) mblen(mbyte, MB_CUR_MAX) == -1
+
+bool is_mbs(const char *str);
+int mbs_char_count(const char *str);
+bool mb_equal(const char *stra, const char *strb);
+
+// TODO add fuzzy match function (could be reused for fuzzy finding in pager etc)
+int dist_lev(const char *stra, const char *strb);
+int dist_dam_lev(const char *tar, const Completion *comp);
 #endif

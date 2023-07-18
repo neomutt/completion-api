@@ -1,7 +1,7 @@
 #include "config.h"
 #include "acutest.h"
-#include "statemach.h"
-#include "completion.h"
+#include "private.h"
+#include "lib.h"
 #include "mutt/array.h"
 
 #define STR_EQ(s1, s2) strcmp(s1, s2) == 0

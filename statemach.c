@@ -25,7 +25,7 @@
  *
  * Neomutt completion API
  */
-#include "statemach.h"
+#include "private.h"
 
 Completion *compl_new(enum MuttMatchMode mode)
 {

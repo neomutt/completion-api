@@ -3,7 +3,7 @@
 #include <locale.h>
 #include <stdio.h>
 #include "mutt/lib.h"
-#include "statemach.h"
+#include "private.h"
 
 #define STR_EQ(s1, s2) strcmp(s1, s2) == 0
 #define STR_DF(s1, s2) strcmp(s1, s2) != 0

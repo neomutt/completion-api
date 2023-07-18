@@ -1,6 +1,6 @@
 #include "acutest.h"
-#include "completion.h"
-#include "statemach.h"
+#include "lib.h"
+#include "private.h"
 
 void test_match_simple()
 {
