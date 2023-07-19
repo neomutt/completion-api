@@ -561,7 +561,7 @@ static int dist_exact(const char *tar, const Completion *comp)
       return len_tar - len_src;
   }
   else {
-    if (mutt_strn_cmp(src, tar, len_src) != 0)
+    if (!mutt_strn_equal(src, tar, len_src))
       return -1;
 
     // insertions are calculated differently for mbs
