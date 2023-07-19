@@ -5,7 +5,10 @@ lcov.info
 test_statemach
 tags
 test_completion
+test_exact
 test_fuzzy
+test_matching
+test_regex
 compile_commands.json
 .clangd/
 .vimrc
