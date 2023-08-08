@@ -20,13 +20,13 @@ LDFLAGS	+= -fprofile-arcs -ftest-coverage
 # CFLAGS	+= -fsanitize=address -fsanitize-recover=address
 # LDFLAGS	+= -fsanitize=address -fsanitize-recover=address
 
-OUT	= test_exact test_statemach test_matching test_regex test_fuzzy
+OUT	= test_exact test_engine test_matching test_regex test_fuzzy
 
-SRC_STATE	= test_statemach.c statemach.c fuzzy.c
-SRC_MATCH 	= test_matching.c statemach.c fuzzy.c
-SRC_FUZZY 	= test_fuzzy.c fuzzy.c statemach.c
-SRC_REGEX 	= test_regex.c fuzzy.c statemach.c
-SRC_EXACT	= test_exact.c statemach.c fuzzy.c
+SRC_STATE	= test_engine.c engine.c fuzzy.c
+SRC_MATCH 	= test_matching.c engine.c fuzzy.c
+SRC_FUZZY 	= test_fuzzy.c fuzzy.c engine.c
+SRC_REGEX 	= test_regex.c fuzzy.c engine.c
+SRC_EXACT	= test_exact.c engine.c fuzzy.c
 
 OBJ_MATCH	= $(SRC_MATCH:%.c=%.o)
 OBJ_FUZZY	= $(SRC_FUZZY:%.c=%.o)
@@ -39,7 +39,7 @@ all: $(OUT)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-test_statemach: $(OBJ_STATE)
+test_engine: $(OBJ_STATE)
 	$(CC) -o $@ $(OBJ_STATE) $(LDFLAGS)
 
 test_exact: $(OBJ_EXACT)
@@ -54,8 +54,8 @@ test_fuzzy: $(OBJ_FUZZY)
 test_regex: $(OBJ_REGEX)
 	$(CC) -o $@ $(OBJ_REGEX) $(LDFLAGS)
 
-test:	test_statemach test_exact test_matching test_fuzzy test_regex
-	./test_statemach
+test:	test_engine test_exact test_matching test_fuzzy test_regex
+	./test_engine
 	./test_exact
 	./test_matching
 	./test_fuzzy
@@ -73,7 +73,7 @@ tags:	$(SRC) $(HDR) force
 	ctags -R .
 
 lcov: all test force
-	$(RM) lcov test_statemach.gc?? test_exact.gc??
+	$(RM) lcov test_engine.gc?? test_exact.gc??
 	lcov -t "result" -o lcov.info -c -d .
 	genhtml -o lcov lcov.info
 

@@ -2,7 +2,7 @@
 *.o
 lcov/
 lcov.info
-test_statemach
+test_engine
 tags
 test_completion
 test_exact
