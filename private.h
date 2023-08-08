@@ -58,19 +58,6 @@
 // could use wcscoll as well (locale aware)
 #define WSTR_EQ(s1, s2) wcscmp(s1, s2) == 0
 
-Completion *compl_new(enum MuttMatchMode mode);
-Completion *compl_from_array(const struct CompletionStringList *list, enum MuttMatchMode mode);
-void        compl_free(Completion *comp);
-
-int         compl_compile_regex(Completion *comp);
-
-// TODO handle strings with dynamic size (keep track of longest string)
-int         compl_add(Completion *comp, const char *str, const size_t buf_len);
-int         compl_type(Completion *comp, const char *str, const size_t buf_len);
-
-// this is the main interface function for users to collect/cycle the next matched string
-char *      compl_complete(Completion *comp);
-
 // these are helper functions to check string health etc.
 // TODO there must be equivalent mutt functions to handle user input safely
 int         compl_health_check(const Completion *comp);
@@ -78,6 +65,7 @@ int         compl_str_check(const char *str, const size_t buf_len);
 int         compl_str_check(const char *str, const size_t buf_len);
 int         compl_get_size(Completion *comp);
 bool        compl_check_duplicate(const Completion *comp, const char *str, const size_t buf_len);
+int         compl_compile_regex(Completion *comp);
 
 // the main matching function
 int         match_dist(const char *tar, const Completion *comp);
