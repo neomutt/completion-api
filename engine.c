@@ -193,6 +193,11 @@ int compl_type(Completion *comp, const char *str, size_t buf_len)
   if (!compl_str_check(str, buf_len))
     return 0;
 
+  // no actual change in the typed string
+  if (mutt_str_equal(str, comp->typed_item->str)) {
+    return 1;
+  }
+
   // copy typed string into completion
   mutt_strn_copy(comp->typed_item->str, str, buf_len, MAX_TYPED);
 
