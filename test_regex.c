@@ -25,59 +25,62 @@
 #include "acutest.h"
 #include <locale.h>
 #include "mutt/mbyte.h"
+#include "mutt/buffer.h"
 #include "lib.h"
 #include "private.h"
+
+#define BUF(arg) buf_new(arg)
 
 void test_simple_regex(void)
 {
   Completion *comp = compl_new(COMPL_MODE_REGEX);
 
   // TODO what about locale unset cases?
-  comp->typed_item->str = ".+pple";
+  comp->typed_item->buf = BUF(".+pple");
   compl_compile_regex(comp);
-  TEST_CHECK(match_dist("apple", comp) == 1);
-  TEST_CHECK(match_dist("aapple", comp) == 0);
+  TEST_CHECK(match_dist(BUF("apple"), comp) == 1);
+  TEST_CHECK(match_dist(BUF("aapple"), comp) == 0);
 
-  comp->typed_item->str = ".*pple";
+  comp->typed_item->buf = BUF(".*pple");
   compl_compile_regex(comp);
-  TEST_CHECK(match_dist("abrakadapple", comp) == 6);
-  TEST_CHECK(match_dist("unapple", comp) == 1);
+  TEST_CHECK(match_dist(BUF("abrakadapple"), comp) == 6);
+  TEST_CHECK(match_dist(BUF("unapple"), comp) == 1);
 
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
 
-  comp->typed_item->str = ".+pple";
+  comp->typed_item->buf = BUF(".+pple");
   compl_compile_regex(comp);
-  TEST_CHECK(match_dist("äpple", comp) == 0);
-  TEST_CHECK(match_dist("ääaapple", comp) == 4);
+  TEST_CHECK(match_dist(BUF("äpple"), comp) == 0);
+  TEST_CHECK(match_dist(BUF("ääaapple"), comp) == 4);
 
-  comp->typed_item->str = ".*pple.*$";
+  comp->typed_item->buf = BUF(".*pple.*$");
   compl_compile_regex(comp);
-  TEST_CHECK(match_dist("\nabrakadapple\n", comp) == 5);
+  TEST_CHECK(match_dist(BUF("\nabrakadapple\n"), comp) == 5);
 
   // with ^ and $ these should not match
-  comp->typed_item->str = "^.*pple$";
+  comp->typed_item->buf = BUF("^.*pple$");
   compl_compile_regex(comp);
-  TEST_CHECK(match_dist("abrakadapple\nerror", comp) == -1);
-  comp->typed_item->str = "abra^.*pple$";
+  TEST_CHECK(match_dist(BUF("abrakadapple\nerror"), comp) == -1);
+  comp->typed_item->buf = BUF("abra^.*pple$");
   compl_compile_regex(comp);
-  TEST_CHECK(match_dist("abrakadapple\nerror", comp) == -1);
+  TEST_CHECK(match_dist(BUF("abrakadapple\nerror"), comp) == -1);
 
   comp->flags = COMPL_MATCH_IGNORECASE;
-  comp->typed_item->str = ".*pple";
+  comp->typed_item->buf = BUF(".*pple");
   compl_compile_regex(comp);
-  TEST_CHECK(match_dist("abrakadAPPLE", comp) == 6);
-  TEST_CHECK(match_dist("unAPPLE", comp) == 1);
+  TEST_CHECK(match_dist(BUF("abrakadAPPLE"), comp) == 6);
+  TEST_CHECK(match_dist(BUF("unAPPLE"), comp) == 1);
 
-  comp->typed_item->str = ".*PPLE";
+  comp->typed_item->buf = BUF(".*PPLE");
   compl_compile_regex(comp);
-  TEST_CHECK(match_dist("abrakadapple", comp) == 6);
-  TEST_CHECK(match_dist("unapple", comp) == 1);
+  TEST_CHECK(match_dist(BUF("abrakadapple"), comp) == 6);
+  TEST_CHECK(match_dist(BUF("unapple"), comp) == 1);
 
-  comp->typed_item->str = ".*PplE";
+  comp->typed_item->buf = BUF(".*PplE");
   compl_compile_regex(comp);
-  TEST_CHECK(match_dist("abrakadApPLe", comp) == 6);
-  TEST_CHECK(match_dist("unapPLe", comp) == 1);
+  TEST_CHECK(match_dist(BUF("abrakadApPLe"), comp) == 6);
+  TEST_CHECK(match_dist(BUF("unapPLe"), comp) == 1);
 }
 
 TEST_LIST = {
