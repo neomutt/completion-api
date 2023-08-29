@@ -26,8 +26,9 @@
 #include "lib.h"
 #include "mutt/array.h"
 
-#define STR_EQ(s1, s2) strcmp(s1, s2) == 0
-#define STR_DF(s1, s2) strcmp(s1, s2) != 0
+#define STR_EQ(s1, s2) buf_str_equal(s1, s2)
+#define STR_DF(s1, s2) !buf_str_equal(s1, s2)
+#define BUF(s1) buf_new(s1)
 
 void state_init(void)
 {
@@ -48,28 +49,28 @@ void state_init_from_array(void)
   ARRAY_ADD(&list, "arange");
 
   Completion *comp = compl_from_array(&list, COMPL_MODE_EXACT);
-  compl_type(comp, "ap", 3);
+  compl_type(comp, BUF("ap"));
 
-  char *result = NULL;
+  struct Buffer *result = NULL;
   printf("First tab...\n");
   result = compl_complete(comp);
-  printf("  ap -> %s\n", result);
-  TEST_CHECK(STR_EQ(result, "apfel"));
+  printf("  ap -> %s\n", result->data);
+  TEST_CHECK(STR_EQ(result, BUF("apfel")));
 
   printf("Second tab...\n");
   result = compl_complete(comp);
-  printf("  ap -> %s\n", result);
-  TEST_CHECK(STR_EQ(result, "apple"));
+  printf("  ap -> %s\n", result->data);
+  TEST_CHECK(STR_EQ(result, BUF("apple")));
 
   printf("Third tab...\n");
   result = compl_complete(comp);
-  printf("  ap -> %s\n", result);
-  TEST_CHECK(STR_EQ(result, "apply"));
+  printf("  ap -> %s\n", result->data);
+  TEST_CHECK(STR_EQ(result, BUF("apply")));
 
   printf("Third tab to reset...\n");
   result = compl_complete(comp);
-  printf("  ap -> %s\n", result);
-  TEST_CHECK(STR_EQ(result, "ap"));
+  printf("  ap -> %s\n", result->data);
+  TEST_CHECK(STR_EQ(result, BUF("ap")));
 
   ARRAY_FREE(&list);
   compl_free(comp);
@@ -81,23 +82,19 @@ void malformed_input(void)
   setlocale(LC_ALL, "en_US.UTF-8");
 
   // calling functions with null completions
-  TEST_CHECK(compl_add(NULL, "hi", 3) == 0);
-  TEST_CHECK(compl_type(NULL, "hi", 3) == 0);
+  TEST_CHECK(compl_add(NULL, BUF("hi")) == 0);
+  TEST_CHECK(compl_type(NULL, BUF("hi")) == 0);
   TEST_CHECK(!compl_complete(NULL));
 
   Completion *comp = compl_new(COMPL_MODE_EXACT);
 
   // calling with null pointer string
-  TEST_CHECK(compl_type(comp, NULL, 5) == 0);
-  TEST_CHECK(compl_add(comp, NULL, 5) == 0);
+  TEST_CHECK(compl_type(comp, NULL) == 0);
+  TEST_CHECK(compl_add(comp, NULL) == 0);
 
   // calling with empty string
-  TEST_CHECK(compl_type(comp, "", 5) == 0);
-  TEST_CHECK(compl_add(comp, "", 5) == 0);
-
-  // calling with small buffer size
-  TEST_CHECK(compl_type(comp, "abcd", 1) == 0);
-  TEST_CHECK(compl_add(comp, "abcd", 1) == 0);
+  TEST_CHECK(compl_type(comp, BUF("")) == 0);
+  TEST_CHECK(compl_add(comp, BUF("")) == 0);
 
   compl_free(comp);
 }
@@ -109,10 +106,10 @@ void state_empty(void)
   printf("\n");
   Completion *comp = compl_new(COMPL_MODE_EXACT);
 
-  char *result = NULL;
+  struct Buffer *result = NULL;
   result = compl_complete(comp);
 
-  TEST_CHECK(STR_EQ(result, ""));
+  TEST_CHECK(STR_EQ(result, BUF("")));
 
   compl_free(comp);
 }
@@ -124,17 +121,17 @@ void state_nomatch(void)
   printf("\n");
   Completion *comp = compl_new(COMPL_MODE_EXACT);
 
-  compl_add(comp, "apfel", 6);
-  compl_add(comp, "apple", 6);
-  compl_add(comp, "apply", 6);
-  compl_add(comp, "arange", 7);
+  compl_add(comp, BUF("apfel"));
+  compl_add(comp, BUF("apple"));
+  compl_add(comp, BUF("apply"));
+  compl_add(comp, BUF("arange"));
 
-  compl_type(comp, "bertha", 7);
+  compl_type(comp, BUF("bertha"));
 
-  char *result = NULL;
+  struct Buffer *result = NULL;
   result = compl_complete(comp);
 
-  TEST_CHECK(STR_EQ(result, "bertha"));
+  TEST_CHECK(STR_EQ(result, BUF("bertha")));
 
   compl_free(comp);
 }
@@ -146,22 +143,22 @@ void state_single(void)
   printf("\n");
   Completion *comp = compl_new(COMPL_MODE_EXACT);
 
-  compl_add(comp, "apple", 6);
-  compl_add(comp, "apply", 6);
-  compl_add(comp, "arange", 7);
-  compl_add(comp, "Äpfel", 6);
+  compl_add(comp, BUF("apple"));
+  compl_add(comp, BUF("apply"));
+  compl_add(comp, BUF("arange"));
+  compl_add(comp, BUF("Äpfel"));
 
-  compl_type(comp, "ar", 3);
+  compl_type(comp, BUF("ar"));
 
-  char *result = NULL;
+  struct Buffer *result = NULL;
   result = compl_complete(comp);
 
-  TEST_CHECK(STR_EQ(result, "arange"));
+  TEST_CHECK(STR_EQ(result, BUF("arange")));
 
   printf("Tabbing again to reset...\n");
   result = compl_complete(comp);
 
-  TEST_CHECK(STR_EQ(result, "ar"));
+  TEST_CHECK(STR_EQ(result, BUF("ar")));
 
   compl_free(comp);
 }
@@ -174,23 +171,23 @@ void state_single_utf8(void)
   Completion *comp = compl_new(COMPL_MODE_EXACT);
   comp->flags = COMPL_MATCH_IGNORECASE;
 
-  compl_add(comp, "apfel", 6);
-  compl_add(comp, "apple", 6);
-  compl_add(comp, "Äpfel", 8); // this has to be bigger, because our umlaut is not just one char
+  compl_add(comp, BUF("apfel"));
+  compl_add(comp, BUF("apple"));
+  compl_add(comp, BUF("Äpfel")); // this has to be bigger, because our umlaut is not just one char
 
-  compl_type(comp, "äp", 6);
+  compl_type(comp, BUF("äp"));
 
-  char *result = NULL;
+  struct Buffer *result = NULL;
   printf("Tabbing single item (ignoring case)...\n");
   result = compl_complete(comp);
-  printf("  äp -> Äpfel : (%s)\n", result);
+  printf("  äp -> Äpfel : (%s)\n", result->data);
 
-  TEST_CHECK(STR_EQ(result, "Äpfel"));
+  TEST_CHECK(STR_EQ(result, BUF("Äpfel")));
 
   printf("Tabbing again to reset...\n");
   result = compl_complete(comp);
-  printf("  äp -> äp: (%s)\n", result);
-  TEST_CHECK(STR_EQ(result, "äp"));
+  printf("  äp -> äp: (%s)\n", result->data);
+  TEST_CHECK(STR_EQ(result, BUF("äp")));
 
   compl_free(comp);
 }
@@ -202,33 +199,33 @@ void state_multi(void)
   printf("\n");
   Completion *comp = compl_new(COMPL_MODE_EXACT);
 
-  compl_add(comp, "apfel", 6);
-  compl_add(comp, "apple", 6);
-  compl_add(comp, "apply", 6);
-  compl_add(comp, "arange", 7);
+  compl_add(comp, BUF("apfel"));
+  compl_add(comp, BUF("apple"));
+  compl_add(comp, BUF("apply"));
+  compl_add(comp, BUF("arange"));
 
-  compl_type(comp, "ap", 3);
+  compl_type(comp, BUF("ap"));
 
-  char *result = NULL;
+  struct Buffer *result = NULL;
   printf("First tab...\n");
   result = compl_complete(comp);
-  printf("  ap -> %s\n", result);
-  TEST_CHECK(STR_EQ(result, "apfel"));
+  printf("  ap -> %s\n", result->data);
+  TEST_CHECK(STR_EQ(result, BUF("apfel")));
 
   printf("Second tab...\n");
   result = compl_complete(comp);
-  printf("  ap -> %s\n", result);
-  TEST_CHECK(STR_EQ(result, "apple"));
+  printf("  ap -> %s\n", result->data);
+  TEST_CHECK(STR_EQ(result, BUF("apple")));
 
   printf("Third tab...\n");
   result = compl_complete(comp);
-  printf("  ap -> %s\n", result);
-  TEST_CHECK(STR_EQ(result, "apply"));
+  printf("  ap -> %s\n", result->data);
+  TEST_CHECK(STR_EQ(result, BUF("apply")));
 
   printf("Third tab to reset...\n");
   result = compl_complete(comp);
-  printf("  ap -> %s\n", result);
-  TEST_CHECK(STR_EQ(result, "ap"));
+  printf("  ap -> %s\n", result->data);
+  TEST_CHECK(STR_EQ(result, BUF("ap")));
 
   compl_free(comp);
 }
@@ -238,22 +235,22 @@ void duplicate_add(void)
   printf("\n");
   Completion *comp = compl_new(COMPL_MODE_EXACT);
 
-  compl_add(comp, "apfel", 6);
-  compl_add(comp, "apple", 6);
+  compl_add(comp, BUF("apfel"));
+  compl_add(comp, BUF("apple"));
 
   TEST_CHECK(compl_get_size(comp) == 3);
 
-  compl_add(comp, "apple", 6);
+  compl_add(comp, BUF("apple"));
 
   TEST_CHECK(compl_get_size(comp) == 3);
 
   // we need to set the locale settings, otherwise UTF8 chars won't work as expected
   setlocale(LC_ALL, "en_US.UTF-8");
-  compl_add(comp, "Äpfel", 6);
+  compl_add(comp, BUF("Äpfel"));
 
   TEST_CHECK(compl_get_size(comp) == 4);
 
-  compl_add(comp, "Äpfel", 6);
+  compl_add(comp, BUF("Äpfel"));
   printf("Another duplicate, this time unicode...\n");
   TEST_CHECK(compl_get_size(comp) == 4);
 
