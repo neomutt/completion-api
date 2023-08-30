@@ -36,6 +36,7 @@
 #include "mutt/array.h"
 #include "mutt/string2.h"
 #include "mutt/mbyte.h"
+#include "mutt/buffer.h"
 #include "mutt_logging.h"
 #include "config.h"
 #include "lib.h"
@@ -61,14 +62,14 @@
 // these are helper functions to check string health etc.
 // TODO there must be equivalent mutt functions to handle user input safely
 int         compl_health_check(const Completion *comp);
-int         compl_str_check(const char *str, const size_t buf_len);
-int         compl_str_check(const char *str, const size_t buf_len);
+int         compl_str_check(const struct Buffer *str);
+int         compl_str_check(const struct Buffer *str);
 int         compl_get_size(Completion *comp);
-bool        compl_check_duplicate(const Completion *comp, const char *str, const size_t buf_len);
+bool        compl_check_duplicate(const Completion *comp, const struct Buffer *buf);
 int         compl_compile_regex(Completion *comp);
 
 // the main matching function
-int         match_dist(const char *tar, const Completion *comp);
+int         match_dist(const struct Buffer *tar, const Completion *comp);
 #endif
 
 #ifndef ISLONGMBYTE

@@ -38,12 +38,10 @@ Completion *compl_new(enum MuttMatchMode mode)
   Completion *comp = mutt_mem_calloc(1, sizeof(Completion));
 
   // initialise the typed item
-  comp->typed_item = mutt_mem_malloc(sizeof(CompletionItem));
-  comp->typed_item->str = mutt_mem_calloc(1, sizeof(CompletionItem));
+  comp->typed_item = mutt_mem_calloc(1, sizeof(CompletionItem));
+  comp->typed_item->buf = buf_new("");
   comp->typed_item->is_match = true;
   comp->typed_item->match_dist = -(MAX_TYPED + 1);
-
-  mutt_strn_copy(comp->typed_item->str, "", 1, MAX_TYPED);
 
   comp->cur_item = comp->typed_item;
 
@@ -74,7 +72,9 @@ Completion * compl_from_array(const struct CompletionStringList *list, enum Mutt
   char **item;
   ARRAY_FOREACH(item, list)
   {
-    compl_add(comp, *item, mutt_str_len(*item) + 1);
+    struct Buffer *buf = buf_new(*item);
+    compl_add(comp, buf);
+    buf_free(&buf);
   };
 
   return comp;
@@ -86,7 +86,13 @@ Completion * compl_from_array(const struct CompletionStringList *list, enum Mutt
  * @param comp Completion struct to free
  */
 void compl_free(Completion *comp) {
-  free(comp->typed_item->str);
+  CompletionItem *item;
+  ARRAY_FOREACH(item, comp->items)
+  {
+    buf_free(&item->buf);
+  };
+
+  /* the typed item is the only one which is allocated */
   free(comp->typed_item);
   ARRAY_FREE(comp->items);
 }
@@ -96,39 +102,32 @@ void compl_free(Completion *comp) {
  *
  * @param comp Completion struct
  * @param str string to add
- * @param buf_len length of the string buffer
  */
-int compl_add(Completion *comp, const char *str, size_t buf_len)
+int compl_add(Completion *comp, const struct Buffer *buf)
 {
   if (!compl_health_check(comp))
     return 0;
 
-  if (!compl_str_check(str, buf_len))
+  if (buf_is_empty(buf))
     return 0;
 
   CompletionItem new_item = { 0 };
 
-  // use a conservative memory allocation
-  size_t item_len = mutt_str_len(str) + 1;
-  new_item.str = mutt_mem_calloc(item_len, sizeof(char));
-  logdeb(4, "Mem alloc succeeded: new_item.str, bytes: %lu = %lu chars",
-         (item_len) * sizeof(char), item_len - 1);
-  mutt_strn_copy(new_item.str, str, buf_len, item_len);
+  // use buffer copying for memory allocation
+  new_item.buf = buf_dup(buf);
 
   new_item.is_match = false;
   new_item.match_dist = -1;
 
-  logdeb(4, "Added: '%s', (buf_len:%lu)", new_item.str, buf_len);
-
   // don't add duplicates
-  if (!compl_check_duplicate(comp, new_item.str, buf_len))
+  if (!compl_check_duplicate(comp, new_item.buf))
   {
     ARRAY_ADD(comp->items, new_item);
-    logdeb(4, "Added item '%s' successfully.", new_item.str);
+    logdeb(4, "Added item '%s' successfully.", buf_strdup(new_item.buf));
   }
   else
   {
-    logdeb(4, "Duplicate item '%s' skipped.", new_item.str);
+    logdeb(4, "Duplicate item '%s' skipped.", buf_strdup(new_item.buf));
     return 0;
   }
 
@@ -149,7 +148,7 @@ int compl_compile_regex(Completion *comp) {
   if (comp->flags & COMPL_MATCH_IGNORECASE)
     comp_flags |= REG_ICASE;
 
-  int errcode = regcomp(&comp->regex, comp->typed_item->str, comp_flags);
+  int errcode = regcomp(&comp->regex, buf_strdup(comp->typed_item->buf), comp_flags);
 
   // successful compilation
   if (errcode == 0)
@@ -181,27 +180,26 @@ int compl_compile_regex(Completion *comp) {
  * type a string to be completed (user input)
  *
  * @param comp Completion struct
- * @param str user input
- * @param buf_len buffer length of str
+ * @param buf user input
  * @retval success 1 if successful, 0 otherwise
  */
-int compl_type(Completion *comp, const char *str, size_t buf_len)
+int compl_type(Completion *comp, const struct Buffer *buf)
 {
   if (!compl_health_check(comp))
     return 0;
 
-  if (!compl_str_check(str, buf_len))
+  if (buf_is_empty(buf))
     return 0;
 
   // no actual change in the typed string
-  if (mutt_str_equal(str, comp->typed_item->str)) {
+  if (buf_str_equal(buf, comp->typed_item->buf)) {
     return 1;
   }
 
   // copy typed string into completion
-  mutt_strn_copy(comp->typed_item->str, str, buf_len, MAX_TYPED);
+  buf_copy(comp->typed_item->buf, buf);
 
-  logdeb(4, "Typing: '%s', (buf_len:%lu)", comp->typed_item->str, buf_len);
+  logdeb(4, "Typing: '%s'", buf_strdup(comp->typed_item->buf));
 
   comp->state = COMPL_STATE_INIT;
 
@@ -232,7 +230,7 @@ static int compl_sort_fn(const void *a, const void *b) {
   else if (!itema->is_match && itemb->is_match)
     return 1;
   else if (!itema->is_match && !itemb->is_match)
-    return mutt_str_coll(itema->str, itemb->str);
+    return buf_coll(itema->buf, itemb->buf);
 
   // the typed string stays at the front
   if (itema->match_dist == -(MAX_TYPED + 1))
@@ -246,7 +244,7 @@ static int compl_sort_fn(const void *a, const void *b) {
     return dist_diff;
 
   // matches with equal match distance are sorted alphabetically
-  return mutt_str_coll(itema->str, itemb->str);
+  return buf_coll(itema->buf, itemb->buf);
 }
 
 static void compl_state_init(Completion *comp)
@@ -257,10 +255,10 @@ static void compl_state_init(Completion *comp)
 
   ARRAY_FOREACH_FROM(item, comp->items, 1)
   {
-    item->match_dist = match_dist(item->str, comp);
+    item->match_dist = match_dist(item->buf, comp);
     if (item->match_dist >= 0)
     {
-      logdeb(5, "'%s' matched: '%s'", comp->typed_item->str, item->str);
+      logdeb(5, "'%s' matched: '%s'", buf_strdup(comp->typed_item->buf), buf_strdup(item->buf));
       item->is_match = true;
 
       n_matches++;
@@ -273,7 +271,7 @@ static void compl_state_init(Completion *comp)
   {
     comp->state = COMPL_STATE_NOMATCH;
     comp->cur_item = comp->typed_item;
-    logdeb(4, "No match for '%s'.", comp->typed_item->str);
+    logdeb(4, "No match for '%s'.", buf_strdup(comp->typed_item->buf));
   }
   else if (n_matches >= 1)
   {
@@ -328,14 +326,14 @@ static void compl_state_multi(Completion *comp)
   comp->cur_item = comp->typed_item;
 }
 
-char *compl_complete(Completion *comp)
+struct Buffer *compl_complete(Completion *comp)
 {
   if (!compl_health_check(comp))
     return NULL;
 
   if (ARRAY_EMPTY(comp->items))
   {
-    logdeb(4, "Completion on empty list: '%s' -> ''", comp->typed_item->str);
+    logdeb(4, "Completion on empty list: '%s' -> ''", buf_strdup(comp->typed_item->buf));
     return NULL;
   }
 
@@ -379,15 +377,13 @@ char *compl_complete(Completion *comp)
       comp->cur_item = comp->typed_item;
   }
 
-  char *result = comp->cur_item->str;
+  struct Buffer *result = comp->cur_item->buf;
 
   // TODO shall we use an existing pointer argument instead?
 
   // allocate new pointer for result
-  size_t result_len = mutt_str_len(result) + 1;
-  char *match = mutt_mem_calloc(result_len, sizeof(char));
-  mutt_strn_copy(match, result, result_len, result_len);
-  logdeb(4, "Match is '%s' (buf:%lu)\n", match, result_len);
+  struct Buffer *match = buf_dup(result);
+  logdeb(4, "Match is '%s'\n", buf_strdup(match));
   return match;
 }
 
@@ -398,7 +394,7 @@ int compl_health_check(const Completion *comp)
     logerr("CompHealth: null pointer Completion struct.");
     return 0;
   }
-  if (!comp->typed_item->str)
+  if (comp->typed_item->buf == NULL)
   {
     logerr("CompHealth: null pointer typed string.");
     return 0;
@@ -413,58 +409,24 @@ int compl_health_check(const Completion *comp)
   return 1;
 }
 
-int compl_str_check(const char *str, size_t buf_len)
-{
-  if (!str)
-  {
-    logerr("StrHealth: nullpointer string.");
-    return 0;
-  }
-  if (buf_len < 2 || mutt_str_len(str) == 0)
-  {
-    logwar("StrHealth: empty string.");
-    return 0;
-  }
-
-  return 1;
-}
-
-int compl_char_check(const char *str, size_t buf_len)
-{
-  if (!str)
-  {
-    logerr("StrHealth: nullpointer string.");
-    return 0;
-  }
-  if (buf_len < 2 || mutt_str_len(str) == 0)
-  {
-    logwar("StrHealth: empty string.");
-    return 0;
-  }
-
-  return 1;
-}
-
 int compl_get_size(Completion *comp)
 {
   return ARRAY_SIZE(comp->items);
 }
 
-bool compl_check_duplicate(const Completion *comp, const char *str, size_t buf_len)
+bool compl_check_duplicate(const Completion *comp, const struct Buffer *buf)
 {
   if (!compl_health_check(comp))
     return true;
 
-  if (!compl_char_check(str, buf_len))
+  if (buf_is_empty(buf))
     return true;
 
   CompletionItem *item;
   ARRAY_FOREACH(item, comp->items)
   {
-    if (mutt_str_cmp(item->str, str) == 0)
-    {
+    if (buf_str_equal(item->buf, buf))
       return true;
-    }
   };
 
   return false;
@@ -499,7 +461,7 @@ static int dist_regex(const char *tar, const Completion *comp)
     return -1;
   }
 
-  size_t src_len = mutt_str_len(comp->typed_item->str);
+  size_t src_len = mutt_str_len(comp->typed_item->buf->data);
   size_t tar_len = mutt_str_len(tar);
 
   // match distance is the number of additions needed to match the string
@@ -524,7 +486,7 @@ static int dist_regex(const char *tar, const Completion *comp)
  */
 static int dist_exact(const char *tar, const Completion *comp)
 {
-  char *src = comp->typed_item->str;
+  char *src = buf_strdup(comp->typed_item->buf);
   bool src_mbs = is_mbs(src);
   bool tar_mbs = is_mbs(tar);
 
@@ -590,19 +552,20 @@ static int dist_exact(const char *tar, const Completion *comp)
  * @param strb target string
  * @retval int distance between the strings (or -1 if no match at all)
  */
-int match_dist(const char *tar, const Completion *comp)
+int match_dist(const struct Buffer *tar, const Completion *comp)
 {
   int dist = -1;
+  const char *target = buf_strdup(tar);
 
   switch (comp->mode)
   {
     case COMPL_MODE_FUZZY:
-      return dist_dam_lev(tar, comp);
+      return dist_dam_lev(target, comp);
     case COMPL_MODE_REGEX:
-      return dist_regex(tar, comp);
+      return dist_regex(target, comp);
     case COMPL_MODE_EXACT:
     default:
-      return dist_exact(tar, comp);
+      return dist_exact(target, comp);
   }
 
   return dist;

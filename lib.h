@@ -54,7 +54,7 @@ typedef uint8_t MuttMatchFlags;
 #define COMPL_REGERRORSIZE 30
 
 typedef struct CompletionItem {
-  char *str;
+  struct Buffer *buf;
   int match_dist;
   bool is_match;
 } CompletionItem;
@@ -81,10 +81,10 @@ Completion *compl_from_array(const struct CompletionStringList *list, enum MuttM
 void        compl_free(Completion *comp);
 
 // TODO handle strings with dynamic size (keep track of longest string)
-int         compl_add(Completion *comp, const char *str, const size_t buf_len);
-int         compl_type(Completion *comp, const char *str, const size_t buf_len);
+int         compl_add(Completion *comp, const struct Buffer *buf);
+int         compl_type(Completion *comp, const struct Buffer *buf);
 
 // this is the main interface function for users to collect/cycle the next matched string
-char *      compl_complete(Completion *comp);
+struct Buffer *      compl_complete(Completion *comp);
 
 #endif
