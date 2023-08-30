@@ -27,6 +27,8 @@
 #include "lib.h"
 #include "private.h"
 
+#define BUF(s1) buf_new(s1)
+
 void test_mbs_char_count(void)
 {
   // TODO what about locale unset cases?
@@ -109,47 +111,47 @@ void test_damerau_levenshtein(void)
   Completion *comp = compl_new(COMPL_MODE_FUZZY);
 
   // null pointers checks
-  comp->typed_item->str = NULL;
+  comp->typed_item->buf = NULL;
   TEST_CHECK(dist_dam_lev("123", comp) == 3);
   TEST_CHECK(dist_dam_lev(NULL, comp) == 0);
-  comp->typed_item->str = "123";
+  comp->typed_item->buf = BUF("123");
   TEST_CHECK(dist_dam_lev(NULL, comp) == 3);
   TEST_CHECK(dist_dam_lev("", comp) == 3);
-  comp->typed_item->str = "";
+  comp->typed_item->buf = BUF("");
   TEST_CHECK(dist_dam_lev("", comp) == 0);
   TEST_CHECK(dist_dam_lev("123", comp) == 3);
 
   // bad mbytes should always fail
   char *mbyte = "ä";
-  comp->typed_item->str = &mbyte[1];
+  comp->typed_item->buf = BUF(&mbyte[1]);
   TEST_CHECK(dist_dam_lev("abc", comp) == -1);
   TEST_CHECK(dist_dam_lev(&mbyte[1], comp) == -1);
-  comp->typed_item->str = mbyte;
+  comp->typed_item->buf = BUF(mbyte);
   TEST_CHECK(dist_dam_lev(&mbyte[1], comp) == -1);
 
   // some made-up tests
-  comp->typed_item->str = "chitin";
+  comp->typed_item->buf = BUF("chitin");
   TEST_CHECK(dist_dam_lev("chtia", comp) == 2);
-  comp->typed_item->str = "hello";
+  comp->typed_item->buf = BUF("hello");
   TEST_CHECK(dist_dam_lev("hell", comp) == 1);
-  comp->typed_item->str = "peter";
+  comp->typed_item->buf = BUF("peter");
   TEST_CHECK(dist_dam_lev("pteer", comp) == 1);
-  comp->typed_item->str = "pete";
+  comp->typed_item->buf = BUF("pete");
   TEST_CHECK(dist_dam_lev("ptee", comp) == 1);
   TEST_CHECK(dist_dam_lev("pteer", comp) == 2);
-  comp->typed_item->str = "email";
+  comp->typed_item->buf = BUF("email");
   TEST_CHECK(dist_dam_lev("mail", comp) == 1);
 
   // one insertion, one transposition
-  comp->typed_item->str = "fltcap";
+  comp->typed_item->buf = BUF("fltcap");
   TEST_CHECK(dist_dam_lev("flatcpa", comp) == 2);
 
   // mbyte transposition
-  comp->typed_item->str = "päfel";
+  comp->typed_item->buf = BUF("päfel");
   TEST_CHECK(dist_dam_lev("äpfel", comp) == 1);
-  comp->typed_item->str = "xpäfel";
+  comp->typed_item->buf = BUF("xpäfel");
   TEST_CHECK(dist_dam_lev("xäpfel", comp) == 1);
-  comp->typed_item->str = "te";
+  comp->typed_item->buf = BUF("te");
   TEST_CHECK(dist_dam_lev("et", comp) == 1);
 
   // mbyte substitution
