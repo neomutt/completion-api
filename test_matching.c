@@ -24,25 +24,27 @@
 #include "lib.h"
 #include "private.h"
 
+#define BUF(s1) buf_new(s1)
+
 void test_match_simple()
 {
   Completion *comp = compl_new(COMPL_MODE_EXACT);
-  comp->typed_item->str = "apples";
-  char *tar = "applers";
+  comp->typed_item->buf = BUF("apples");
+  struct Buffer *tar = BUF("applers");
 
   comp->mode = COMPL_MODE_EXACT;
   TEST_CHECK(match_dist(tar, comp) == -1);
   comp->mode = COMPL_MODE_FUZZY;
   TEST_CHECK(match_dist(tar, comp) == 1);
 
-  comp->typed_item->str = "derived";
-  tar = "drvd";
+  comp->typed_item->buf = BUF("derived");
+  tar = BUF("drvd");
 
   comp->mode = COMPL_MODE_EXACT;
   TEST_CHECK(match_dist(tar, comp) == -1);
   comp->mode = COMPL_MODE_FUZZY;
   TEST_CHECK(match_dist(tar, comp) == 3);
-  comp->typed_item->str = "drvd";
+  comp->typed_item->buf = BUF("drvd");
   comp->mode = COMPL_MODE_EXACT;
   TEST_CHECK(match_dist(tar, comp) == 0);
 }
